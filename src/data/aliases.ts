@@ -9,20 +9,19 @@ export type AliasMap = {
 export const aliases: AliasMap = {
   "any-gem": [
     "ruby",
-    "cracked-ruby",
     "sapphire",
-    "cracked-sapphire",
     "emerald",
-    "cracked-emerald",
     "topaz",
-    "cracked-topaz",
     "aquamarine",
-    "cracked-aquamarine",
     "opal",
-    "cracked-opal",
     "citrine",
+    "cracked-ruby",
+    "cracked-sapphire",
+    "cracked-emerald",
+    "cracked-topaz",
+    "cracked-aquamarine",
+    "cracked-opal",
     "cracked-citrine",
-    "diamond",
   ],
 };
 
