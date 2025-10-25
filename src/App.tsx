@@ -1,4 +1,5 @@
-import { useState, useId, useEffect } from "react";
+import { useEffect, useId, useState } from "react";
+import { GitHubIcon } from "./components/GitHubIcon";
 import { ItemSearch } from "./components/ItemSearch";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { MaterialsSummary } from "./components/MaterialsSummary";
@@ -11,10 +12,10 @@ import {
 } from "./lib/production-plan-storage";
 import {
   addItemToPlan,
+  aggregateMaterials,
   removeItemFromPlan,
   toggleItemCompletion,
   updateMaterialProgress,
-  aggregateMaterials,
 } from "./lib/production-plan-utils";
 import { getMinimumAmount } from "./lib/recipe-utils";
 import type { ProductionPlan } from "./types/production-plan";
@@ -100,9 +101,20 @@ export const App = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-[1920px] mx-auto px-4">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">
-          Astronomics Manufacturing Calculator
-        </h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-gray-900">
+            Astronomics Manufacturing Calculator
+          </h1>
+          <a
+            href="https://github.com/k-chop/astronomics-manufacturing-calculator"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            <span className="sr-only">GitHub Repository</span>
+            <GitHubIcon />
+          </a>
+        </div>
 
         {/* 2-column layout: Left (Calculator) + Right (Production Plan) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
