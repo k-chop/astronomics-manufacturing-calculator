@@ -3,7 +3,6 @@ import { ItemSearch } from "./components/ItemSearch";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { MaterialsSummary } from "./components/MaterialsSummary";
 import { ProductionPlanList } from "./components/ProductionPlanList";
-import { getItemName } from "./data/item-names";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
 import {
@@ -24,22 +23,24 @@ export const App = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [results, setResults] = useState<CalculationResult[] | null>(null);
-  const [productionPlan, setProductionPlan] = useState<ProductionPlan>({
-    items: [],
+  const [productionPlan, setProductionPlan] = useState<ProductionPlan>(() => {
+    // 初期値としてlocalStorageから読み込む
+    return loadProductionPlan();
   });
+  const [isInitialized, setIsInitialized] = useState(false);
   const itemSearchId = useId();
-  const amountInputId = useId();
 
-  // localStorageから計画を読み込み
+  // 初期化完了フラグ
   useEffect(() => {
-    const loadedPlan = loadProductionPlan();
-    setProductionPlan(loadedPlan);
+    setIsInitialized(true);
   }, []);
 
-  // 計画が変更されたらlocalStorageに保存
+  // 計画が変更されたらlocalStorageに保存（初回は除く）
   useEffect(() => {
-    saveProductionPlan(productionPlan);
-  }, [productionPlan]);
+    if (isInitialized) {
+      saveProductionPlan(productionPlan);
+    }
+  }, [productionPlan, isInitialized]);
 
   const handleItemSelect = (itemId: string) => {
     const minAmount = getMinimumAmount(itemId);
@@ -98,127 +99,65 @@ export const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-[1920px] mx-auto px-4">
         <h1 className="text-4xl font-bold mb-8 text-gray-900">
           Astronomics Manufacturing Calculator
         </h1>
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="space-y-4">
-            <div>
-              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
-                Select Item
-              </label>
-              <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
-            </div>
+          <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
+            Select Item
+          </label>
+          <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
+        </div>
 
-            {selectedItem && (
-              <div>
-                <label htmlFor={amountInputId} className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    id={amountInputId}
-                    type="number"
-                    min="1"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(Number(e.target.value))}
-                    className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleAmountChange(amount + 1)}
-                      className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-                    >
-                      +1
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAmountChange(amount + 5)}
-                      className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-                    >
-                      +5
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAmountChange(amount * 2)}
-                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                    >
-                      x2
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAmountChange(amount * 5)}
-                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                    >
-                      x5
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAmountChange(amount * 10)}
-                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-                    >
-                      x10
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleReset}
-                      className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
-                    >
-                      reset
-                    </button>
-                  </div>
-                  <span className="text-gray-700">
-                    × {getItemName(selectedItem)}
-                  </span>
+        {/* Main Content: 2-column layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Column: Calculator Results */}
+          <div className="space-y-8">
+            {results && selectedItem && (
+              <>
+                <ManufacturingResult
+                  results={results}
+                  targetItem={selectedItem}
+                  targetAmount={amount}
+                  onAmountChange={handleAmountChange}
+                  onReset={handleReset}
+                />
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={handleAddToPlan}
+                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
+                  >
+                    Add to Production Plan
+                  </button>
                 </div>
+              </>
+            )}
+
+            {results === null && selectedItem && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+                No manufacturing recipe found for this item. It may only be available as a raw material.
               </div>
             )}
           </div>
-        </div>
 
-        {results && selectedItem && (
-          <>
-            <ManufacturingResult
-              results={results}
-              targetItem={selectedItem}
-              targetAmount={amount}
+          {/* Right Column: Production Plan */}
+          <div className="space-y-8">
+            {/* Total Materials Summary */}
+            {productionPlan.items.length > 0 && (
+              <MaterialsSummary materials={aggregateMaterials(productionPlan)} />
+            )}
+
+            {/* Production Plan List */}
+            <ProductionPlanList
+              plan={productionPlan}
+              onRemoveItem={handleRemoveFromPlan}
+              onToggleCompletion={handleToggleCompletion}
+              onUpdateMaterialProgress={handleUpdateMaterialProgress}
             />
-            <div className="mt-4 flex justify-center">
-              <button
-                type="button"
-                onClick={handleAddToPlan}
-                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
-              >
-                Add to Production Plan
-              </button>
-            </div>
-          </>
-        )}
-
-        {results === null && selectedItem && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
-            No manufacturing recipe found for this item. It may only be available as a raw material.
           </div>
-        )}
-
-        {/* Total Materials Summary */}
-        {productionPlan.items.length > 0 && (
-          <div className="mt-8">
-            <MaterialsSummary materials={aggregateMaterials(productionPlan)} />
-          </div>
-        )}
-
-        {/* Production Plan List */}
-        <div className="mt-8">
-          <ProductionPlanList
-            plan={productionPlan}
-            onRemoveItem={handleRemoveFromPlan}
-            onToggleCompletion={handleToggleCompletion}
-            onUpdateMaterialProgress={handleUpdateMaterialProgress}
-          />
         </div>
 
         {/* Footer */}

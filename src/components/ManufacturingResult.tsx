@@ -7,6 +7,8 @@ type ManufacturingResultProps = {
   results: CalculationResult[];
   targetItem: string;
   targetAmount: number;
+  onAmountChange: (newAmount: number) => void;
+  onReset: () => void;
   locale?: string;
 };
 
@@ -14,13 +16,70 @@ export function ManufacturingResult({
   results,
   targetItem,
   targetAmount,
+  onAmountChange,
+  onReset,
   locale = "en",
 }: ManufacturingResultProps) {
 
   return (
     <div className="space-y-6">
-      <div className="text-lg font-semibold">
-        Manufacturing {targetAmount} × {getItemName(targetItem, locale)}
+      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
+        <div className="text-lg font-semibold mb-4">
+          Manufacturing {getItemName(targetItem, locale)}
+        </div>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="number"
+            min="1"
+            value={targetAmount}
+            onChange={(e) => onAmountChange(Number(e.target.value))}
+            className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onAmountChange(targetAmount + 1)}
+              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+            >
+              +1
+            </button>
+            <button
+              type="button"
+              onClick={() => onAmountChange(targetAmount + 5)}
+              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+            >
+              +5
+            </button>
+            <button
+              type="button"
+              onClick={() => onAmountChange(targetAmount * 2)}
+              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+            >
+              x2
+            </button>
+            <button
+              type="button"
+              onClick={() => onAmountChange(targetAmount * 5)}
+              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+            >
+              x5
+            </button>
+            <button
+              type="button"
+              onClick={() => onAmountChange(targetAmount * 10)}
+              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+            >
+              x10
+            </button>
+            <button
+              type="button"
+              onClick={onReset}
+              className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
+            >
+              reset
+            </button>
+          </div>
+        </div>
       </div>
 
       {results.map((result, patternIndex) => (

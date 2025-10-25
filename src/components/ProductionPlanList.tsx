@@ -73,7 +73,13 @@ export function ProductionPlanList({
                   <input
                     type="checkbox"
                     checked={item.completed}
-                    onChange={() => onToggleCompletion(item.id)}
+                    onChange={() => {
+                      onToggleCompletion(item.id);
+                      // 完了時にdetailsを閉じる
+                      if (!item.completed && expandedItems.has(item.id)) {
+                        toggleExpand(item.id);
+                      }
+                    }}
                     className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                   />
                   <div className="flex-1">
