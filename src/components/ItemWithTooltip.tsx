@@ -1,5 +1,5 @@
 import { getAliasItems } from "../data/aliases";
-import { getAsteroidName } from "../data/asteroid-names";
+import { getAsteroidInfo } from "../data/asteroid";
 import { getItemName, type Locale } from "../data/item-names";
 import { rawMaterials } from "../data/raw-materials";
 import { RawMaterialIcon } from "./RawMaterialIcon";
@@ -52,7 +52,8 @@ export function ItemWithTooltip({
               <div className="font-semibold mb-1">Found on:</div>
               <ul className="list-disc list-inside">
                 {rawMaterial.foundOn.map((asteroid) => (
-                  <li key={asteroid}>{getAsteroidName(asteroid, locale)}</li>
+                  // FIXME: ここでregion, compositionがある場合はname, region, compositionを縦に揃うように表示したい
+                  <li key={asteroid}>{getAsteroidInfo(asteroid, locale)}</li>
                 ))}
               </ul>
             </div>

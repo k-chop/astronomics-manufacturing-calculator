@@ -1,4 +1,4 @@
-import type { AsteroidName } from "./asteroid-names";
+import type { AsteroidName } from "./asteroid";
 
 export type RawMaterial = {
   id: string;
