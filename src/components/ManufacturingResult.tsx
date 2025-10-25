@@ -1,6 +1,7 @@
-import { getAliasItems } from "../data/aliases";
 import { getItemName } from "../data/item-names";
 import type { CalculationResult } from "../lib/calculator";
+import { formatDuration } from "../lib/format-utils";
+import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type ManufacturingResultProps = {
   results: CalculationResult[];
@@ -15,13 +16,6 @@ export function ManufacturingResult({
   targetAmount,
   locale = "en",
 }: ManufacturingResultProps) {
-  const formatDuration = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (remainingSeconds === 0) return `${minutes}m`;
-    return `${minutes}m ${remainingSeconds}s`;
-  };
 
   return (
     <div className="space-y-6">
@@ -45,28 +39,19 @@ export function ManufacturingResult({
           <div className="mb-4">
             <div className="font-semibold mb-2">Required Raw Materials:</div>
             <div className="space-y-1">
-              {result.totalItems.map((item) => {
-                const aliasItems = getAliasItems(item.item);
-                const hasTooltip = aliasItems !== undefined;
-
-                return (
-                  <div key={item.item} className="flex items-center gap-2">
-                    <span className="relative group">
-                      <span className="text-gray-700 cursor-help border-b border-dotted border-gray-400">
-                        {getItemName(item.item, locale)}
-                      </span>
-                      {hasTooltip && (
-                        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
-                          {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
-                      × {item.amount}
-                    </span>
-                  </div>
-                );
-              })}
+              {result.totalItems.map((item) => (
+                <div key={item.item} className="flex items-center gap-2">
+                  <ItemWithTooltip
+                    itemId={item.item}
+                    locale={locale}
+                    className="text-gray-700"
+                    alwaysShowUnderline
+                  />
+                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                    × {item.amount}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -92,28 +77,14 @@ export function ManufacturingResult({
                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
                     {/* Inputs */}
                     <div className="space-y-1">
-                      {recipe.inputs.map((input) => {
-                        const aliasItems = getAliasItems(input.item);
-                        const hasTooltip = aliasItems !== undefined;
-
-                        return (
-                          <div key={input.item} className="text-gray-700">
-                            <span className="relative group">
-                              <span className={hasTooltip ? "cursor-help border-b border-dotted border-gray-400" : ""}>
-                                {getItemName(input.item, locale)}
-                              </span>
-                              {hasTooltip && (
-                                <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
-                                  {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
-                                </span>
-                              )}
-                            </span>
-                            <span className="font-mono text-xs ml-1">
-                              × {input.amount}
-                            </span>
-                          </div>
-                        );
-                      })}
+                      {recipe.inputs.map((input) => (
+                        <div key={input.item} className="text-gray-700">
+                          <ItemWithTooltip itemId={input.item} locale={locale} />
+                          <span className="font-mono text-xs ml-1">
+                            × {input.amount}
+                          </span>
+                        </div>
+                      ))}
                     </div>
 
                     {/* Arrow */}
