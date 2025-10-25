@@ -37,7 +37,7 @@ export const rawMaterials: RawMaterialMap = {
   // Minerals
   amazonite: {
     id: "amazonite",
-    foundOn: ["CV4", "MM3", "TW2", "TW3"],
+    foundOn: ["MM3", "TW2", "TW3", "CV4"],
   },
   bauxite: {
     id: "bauxite",
@@ -45,7 +45,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   calcite: {
     id: "calcite",
-    foundOn: ["BT4", "CC2", "CC3", "CV2", "TW3"],
+    foundOn: ["CC2", "CC3", "TW3", "BT4", "CV2"],
   },
   chromite: {
     id: "chromite",
@@ -53,11 +53,11 @@ export const rawMaterials: RawMaterialMap = {
   },
   cobalt: {
     id: "cobalt",
-    foundOn: ["CV4", "MM1", "TW3"],
+    foundOn: ["MM1", "TW3", "CV4"],
   },
   copper: {
     id: "copper",
-    foundOn: ["BT2", "CC2", "CV2", "MM4"],
+    foundOn: ["CC2", "MM4", "BT2", "CV2"],
   },
   diamond: {
     id: "diamond",
@@ -69,7 +69,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   gold: {
     id: "gold",
-    foundOn: ["BT2", "TW4"],
+    foundOn: ["TW4", "BT2"],
   },
   gypsum: {
     id: "gypsum",
@@ -81,11 +81,11 @@ export const rawMaterials: RawMaterialMap = {
   },
   magnesite: {
     id: "magnesite",
-    foundOn: ["CV4", "TW1"],
+    foundOn: ["TW1", "CV4"],
   },
   nickel: {
     id: "nickel",
-    foundOn: ["BT2", "CC1", "CC4", "MM2", "TW2"],
+    foundOn: ["CC1", "CC4", "MM2", "TW2", "BT2"],
   },
   obsidian: {
     id: "obsidian",
@@ -93,7 +93,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   platinum: {
     id: "platinum",
-    foundOn: ["BT1", "CV2", "MM1", "TW4"],
+    foundOn: ["MM1", "TW4", "BT1", "CV2"],
   },
   rutile: {
     id: "rutile",
@@ -101,11 +101,11 @@ export const rawMaterials: RawMaterialMap = {
   },
   salt: {
     id: "salt",
-    foundOn: ["BT1", "MM3", "TW3"],
+    foundOn: ["MM3", "TW3", "BT1"],
   },
   silver: {
     id: "silver",
-    foundOn: ["BT2", "CC4", "CV1", "MM4", "TW1"],
+    foundOn: ["CC4", "MM4", "TW1", "BT2", "CV1"],
   },
 
   // Gems (Flawless)
@@ -115,7 +115,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   citrine: {
     id: "citrine",
-    foundOn: ["BT3", "TW4"],
+    foundOn: ["TW4", "BT3"],
   },
   emerald: {
     id: "emerald",
@@ -123,15 +123,15 @@ export const rawMaterials: RawMaterialMap = {
   },
   opal: {
     id: "opal",
-    foundOn: ["BT1", "TW2"],
+    foundOn: ["TW2", "BT1"],
   },
   ruby: {
     id: "ruby",
-    foundOn: ["CV1", "TW3"],
+    foundOn: ["TW3", "CV1"],
   },
   sapphire: {
     id: "sapphire",
-    foundOn: ["CV3", "MM2", "MM3"],
+    foundOn: ["MM2", "MM3", "CV3"],
   },
   topaz: {
     id: "topaz",
@@ -145,7 +145,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   "cracked-citrine": {
     id: "cracked-citrine",
-    foundOn: ["BT3", "TW4"],
+    foundOn: ["TW4", "BT3"],
   },
   "cracked-emerald": {
     id: "cracked-emerald",
@@ -153,15 +153,15 @@ export const rawMaterials: RawMaterialMap = {
   },
   "cracked-opal": {
     id: "cracked-opal",
-    foundOn: ["BT1", "TW2"],
+    foundOn: ["TW2", "BT1"],
   },
   "cracked-ruby": {
     id: "cracked-ruby",
-    foundOn: ["CV1", "TW3"],
+    foundOn: ["TW3", "CV1"],
   },
   "cracked-sapphire": {
     id: "cracked-sapphire",
-    foundOn: ["CV3", "MM2", "MM3"],
+    foundOn: ["MM2", "MM3", "CV3"],
   },
   "cracked-topaz": {
     id: "cracked-topaz",
@@ -175,7 +175,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   brine: {
     id: "brine",
-    foundOn: ["BT1", "CC4"],
+    foundOn: ["CC4", "BT1"],
   },
   mercury: {
     id: "mercury",
@@ -183,7 +183,7 @@ export const rawMaterials: RawMaterialMap = {
   },
   nitrogen: {
     id: "nitrogen",
-    foundOn: ["CV4", "TW2"],
+    foundOn: ["TW2", "CV4"],
   },
   petroleum: {
     id: "petroleum",
@@ -197,15 +197,15 @@ export const rawMaterials: RawMaterialMap = {
   // Data Resources - Composition
   "carbonite-asteroid-data": {
     id: "carbonite-asteroid-data",
-    foundOn: ["BT4", "CC1", "CC3", "CV2", "MM2", "TW1", "TW2"],
+    foundOn: ["CC1", "CC3", "MM2", "TW1", "TW2", "BT4", "CV2"],
   },
   "metallic-asteroid-data": {
     id: "metallic-asteroid-data",
-    foundOn: ["BT2", "CC4", "CV4", "MM1", "MM3"],
+    foundOn: ["CC4", "MM1", "MM3", "BT2", "CV4"],
   },
   "silicate-asteroid-data": {
     id: "silicate-asteroid-data",
-    foundOn: ["BT1", "BT3", "CC2", "CV1", "CV3", "MM4", "TW3", "TW4"],
+    foundOn: ["CC2", "MM4", "TW3", "TW4", "BT1", "BT3", "CV1", "CV3"],
   },
 
   // Data Resources - Phenomenon

@@ -50,7 +50,11 @@ export function ItemWithTooltip({
           {showFoundOn && (
             <div>
               <div className="font-semibold mb-1">Found on:</div>
-              {rawMaterial.foundOn.map((asteroid) => getAsteroidName(asteroid, locale)).join(", ")}
+              <ul className="list-disc list-inside">
+                {rawMaterial.foundOn.map((asteroid) => (
+                  <li key={asteroid}>{getAsteroidName(asteroid, locale)}</li>
+                ))}
+              </ul>
             </div>
           )}
         </span>
