@@ -1,5 +1,5 @@
 import { isRawMaterial } from "../data/raw-materials";
-import type { ItemStack, RecipeMap } from "../data/recipes";
+import type { ItemStack } from "../data/recipes";
 import { recipes } from "../data/recipes";
 
 export type CalculationRecipe = {
@@ -30,11 +30,10 @@ function mergeItemStacks(stacks: ItemStack[]): ItemStack[] {
 export function calculateManufacturing(
   itemId: string,
   amount: number,
-  recipeMap: RecipeMap = recipes,
   visited: Set<string> = new Set(),
 ): CalculationResult[] | null {
   // レシピが存在しない場合
-  const methods = recipeMap[itemId];
+  const methods = recipes[itemId];
   if (!methods || methods.length === 0) {
     return null;
   }
@@ -70,7 +69,6 @@ export function calculateManufacturing(
     const allRawMaterials: ItemStack[] = [];
 
     // 各入力材料について再帰的に計算
-    let isValidPath = true;
     for (const input of method.inputs) {
       const requiredAmount = input.amount * timesNeeded;
 
@@ -87,7 +85,6 @@ export function calculateManufacturing(
       const subResults = calculateManufacturing(
         input.item,
         requiredAmount,
-        recipeMap,
         new Set([...visited, itemId]),
       );
 
@@ -102,20 +99,18 @@ export function calculateManufacturing(
         continue;
       }
 
-      // 最初のサブレシピを選択（後で複数パターンを考慮する拡張可能）
+      // 最初のサブレシピを選択
       const subResult = subResults[0];
       totalDuration += subResult.totalDuration;
       allRecipes.push(...subResult.recipes);
       allRawMaterials.push(...subResult.totalItems);
     }
 
-    if (isValidPath) {
-      results.push({
-        totalDuration,
-        totalItems: mergeItemStacks(allRawMaterials),
-        recipes: allRecipes,
-      });
-    }
+    results.push({
+      totalDuration,
+      totalItems: mergeItemStacks(allRawMaterials),
+      recipes: allRecipes,
+    });
   }
 
   return results.length > 0 ? results : null;
