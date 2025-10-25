@@ -4,6 +4,7 @@ import { ManufacturingResult } from "./components/ManufacturingResult";
 import { getItemName } from "./data/item-names";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
+import { getMinimumAmount } from "./lib/recipe-utils";
 
 export const App = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -13,16 +14,26 @@ export const App = () => {
   const amountInputId = useId();
 
   const handleItemSelect = (itemId: string) => {
+    const minAmount = getMinimumAmount(itemId);
     setSelectedItem(itemId);
-    const calculationResults = calculateManufacturing(itemId, amount);
+    setAmount(minAmount);
+    const calculationResults = calculateManufacturing(itemId, minAmount);
     setResults(calculationResults);
   };
 
   const handleAmountChange = (newAmount: number) => {
-    setAmount(newAmount);
+    const validAmount = Math.max(1, newAmount);
+    setAmount(validAmount);
     if (selectedItem) {
-      const calculationResults = calculateManufacturing(selectedItem, newAmount);
+      const calculationResults = calculateManufacturing(selectedItem, validAmount);
       setResults(calculationResults);
+    }
+  };
+
+  const handleReset = () => {
+    if (selectedItem) {
+      const minAmount = getMinimumAmount(selectedItem);
+      handleAmountChange(minAmount);
     }
   };
 
@@ -47,7 +58,7 @@ export const App = () => {
                 <label htmlFor={amountInputId} className="block text-sm font-medium text-gray-700 mb-2">
                   Amount
                 </label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <input
                     id={amountInputId}
                     type="number"
@@ -56,6 +67,50 @@ export const App = () => {
                     onChange={(e) => handleAmountChange(Number(e.target.value))}
                     className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAmountChange(amount + 1)}
+                      className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+                    >
+                      +1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAmountChange(amount + 5)}
+                      className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+                    >
+                      +5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAmountChange(amount * 2)}
+                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                    >
+                      x2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAmountChange(amount * 5)}
+                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                    >
+                      x5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAmountChange(amount * 10)}
+                      className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
+                    >
+                      x10
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
+                    >
+                      reset
+                    </button>
+                  </div>
                   <span className="text-gray-700">
                     × {getItemName(selectedItem)}
                   </span>
