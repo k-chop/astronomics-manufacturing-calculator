@@ -9,6 +9,7 @@ type ManufacturingResultProps = {
   targetAmount: number;
   onAmountChange: (newAmount: number) => void;
   onReset: () => void;
+  onAddToPlan: () => void;
   locale?: string;
 };
 
@@ -18,14 +19,24 @@ export function ManufacturingResult({
   targetAmount,
   onAmountChange,
   onReset,
+  onAddToPlan,
   locale = "en",
 }: ManufacturingResultProps) {
 
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
-        <div className="text-lg font-semibold mb-4">
-          Manufacturing {getItemName(targetItem, locale)}
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-lg font-semibold">
+            Manufacturing {getItemName(targetItem, locale)}
+          </div>
+          <button
+            type="button"
+            onClick={onAddToPlan}
+            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
+          >
+            Add to Plan
+          </button>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <input

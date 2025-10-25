@@ -40,7 +40,7 @@ export function ProductionPlanList({
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
         <p className="text-gray-500 text-sm">
-          No items in the plan yet. Add items from the calculator above.
+          No items in the plan yet. Add items from the calculator on the left.
         </p>
       </div>
     );

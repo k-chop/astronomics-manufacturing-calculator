@@ -104,36 +104,28 @@ export const App = () => {
           Astronomics Manufacturing Calculator
         </h1>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
-            Select Item
-          </label>
-          <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
-        </div>
-
-        {/* Main Content: 2-column layout */}
+        {/* 2-column layout: Left (Calculator) + Right (Production Plan) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column: Calculator Results */}
+          {/* Left Column: Calculator */}
           <div className="space-y-8">
+            {/* Select Item */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
+                Select Item
+              </label>
+              <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
+            </div>
+
+            {/* Manufacturing Results */}
             {results && selectedItem && (
-              <>
-                <ManufacturingResult
-                  results={results}
-                  targetItem={selectedItem}
-                  targetAmount={amount}
-                  onAmountChange={handleAmountChange}
-                  onReset={handleReset}
-                />
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={handleAddToPlan}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
-                  >
-                    Add to Production Plan
-                  </button>
-                </div>
-              </>
+              <ManufacturingResult
+                results={results}
+                targetItem={selectedItem}
+                targetAmount={amount}
+                onAmountChange={handleAmountChange}
+                onReset={handleReset}
+                onAddToPlan={handleAddToPlan}
+              />
             )}
 
             {results === null && selectedItem && (
