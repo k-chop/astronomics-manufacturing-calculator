@@ -87,24 +87,6 @@ describe("calculateManufacturing", () => {
 
     expect(results).toEqual([
       {
-        totalDuration: 625,
-        totalItems: [{ item: "water", amount: 500 }],
-        recipes: [
-          {
-            machine: "carbonator",
-            inputs: [{ item: "biomass", amount: 50 }],
-            outputs: [{ item: "polymers", amount: 20 }],
-            duration: 25,
-          },
-          {
-            machine: "clarifier",
-            inputs: [{ item: "water", amount: 500 }],
-            outputs: [{ item: "biomass", amount: 50 }],
-            duration: 60,
-          },
-        ],
-      },
-      {
         totalDuration: 25,
         totalItems: [{ item: "biomass", amount: 50 }],
         recipes: [
@@ -128,6 +110,24 @@ describe("calculateManufacturing", () => {
           },
         ],
       },
+      {
+        totalDuration: 625,
+        totalItems: [{ item: "water", amount: 500 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "biomass", amount: 50 }],
+            outputs: [{ item: "polymers", amount: 20 }],
+            duration: 25,
+          },
+          {
+            machine: "clarifier",
+            inputs: [{ item: "water", amount: 500 }],
+            outputs: [{ item: "biomass", amount: 50 }],
+            duration: 60,
+          },
+        ],
+      },
     ]);
   });
 
@@ -135,6 +135,18 @@ describe("calculateManufacturing", () => {
     const results = calculateManufacturing("purified-water", 40);
 
     expect(results).toEqual([
+            {
+        totalDuration: 60,
+        totalItems: [{ item: "water", amount: 50 }],
+        recipes: [
+          {
+            machine: "clarifier",
+            inputs: [{ item: "water", amount: 50 }],
+            outputs: [{ item: "purified-water", amount: 40 }],
+            duration: 60,
+          },
+        ],
+      },
       {
         totalDuration: 120,
         totalItems: [{ item: "brine", amount: 100 }],
@@ -143,18 +155,6 @@ describe("calculateManufacturing", () => {
             machine: "clarifier",
             inputs: [{ item: "brine", amount: 100 }],
             outputs: [{ item: "purified-water", amount: 70 }],
-            duration: 60,
-          },
-        ],
-      },
-      {
-        totalDuration: 60,
-        totalItems: [{ item: "water", amount: 50 }],
-        recipes: [
-          {
-            machine: "clarifier",
-            inputs: [{ item: "water", amount: 50 }],
-            outputs: [{ item: "purified-water", amount: 40 }],
             duration: 60,
           },
         ],
@@ -198,6 +198,36 @@ describe("calculateManufacturing", () => {
     // carbonは原材料（carbonite-asteroidsで採取可能）だが、biomassからも製造できる
     // 3つのパターン: water経由、biomass直接、carbon直接
     expect(results).toEqual([
+            {
+        totalDuration: 25,
+        totalItems: [{ item: "carbon", amount: 50 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "carbon", amount: 50 }],
+            outputs: [{ item: "graphite", amount: 10 }],
+            duration: 25,
+          },
+        ],
+      },
+            {
+        totalDuration: 150,
+        totalItems: [{ item: "biomass", amount: 250 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "carbon", amount: 50 }],
+            outputs: [{ item: "graphite", amount: 10 }],
+            duration: 25,
+          },
+          {
+            machine: "carbonator",
+            inputs: [{ item: "biomass", amount: 250 }],
+            outputs: [{ item: "carbon", amount: 50 }],
+            duration: 25,
+          },
+        ],
+      },
       {
         totalDuration: 3150,
         totalItems: [{ item: "water", amount: 2500 }],
@@ -222,36 +252,6 @@ describe("calculateManufacturing", () => {
           },
         ],
       },
-      {
-        totalDuration: 150,
-        totalItems: [{ item: "biomass", amount: 250 }],
-        recipes: [
-          {
-            machine: "carbonator",
-            inputs: [{ item: "carbon", amount: 50 }],
-            outputs: [{ item: "graphite", amount: 10 }],
-            duration: 25,
-          },
-          {
-            machine: "carbonator",
-            inputs: [{ item: "biomass", amount: 250 }],
-            outputs: [{ item: "carbon", amount: 50 }],
-            duration: 25,
-          },
-        ],
-      },
-      {
-        totalDuration: 25,
-        totalItems: [{ item: "carbon", amount: 50 }],
-        recipes: [
-          {
-            machine: "carbonator",
-            inputs: [{ item: "carbon", amount: 50 }],
-            outputs: [{ item: "graphite", amount: 10 }],
-            duration: 25,
-          },
-        ],
-      },
     ]);
   });
 
@@ -259,24 +259,6 @@ describe("calculateManufacturing", () => {
     const results = calculateManufacturing("polymers", 100);
 
     expect(results).toEqual([
-      {
-        totalDuration: 3125,
-        totalItems: [{ item: "water", amount: 2500 }],
-        recipes: [
-          {
-            machine: "carbonator",
-            inputs: [{ item: "biomass", amount: 250 }],
-            outputs: [{ item: "polymers", amount: 100 }],
-            duration: 25,
-          },
-          {
-            machine: "clarifier",
-            inputs: [{ item: "water", amount: 2500 }],
-            outputs: [{ item: "biomass", amount: 250 }],
-            duration: 60,
-          },
-        ],
-      },
       {
         totalDuration: 125,
         totalItems: [{ item: "biomass", amount: 250 }],
@@ -297,6 +279,24 @@ describe("calculateManufacturing", () => {
             machine: "clarifier",
             inputs: [{ item: "petroleum", amount: 350 }],
             outputs: [{ item: "polymers", amount: 105 }],
+            duration: 60,
+          },
+        ],
+      },
+      {
+        totalDuration: 3125,
+        totalItems: [{ item: "water", amount: 2500 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "biomass", amount: 250 }],
+            outputs: [{ item: "polymers", amount: 100 }],
+            duration: 25,
+          },
+          {
+            machine: "clarifier",
+            inputs: [{ item: "water", amount: 2500 }],
+            outputs: [{ item: "biomass", amount: 250 }],
             duration: 60,
           },
         ],
