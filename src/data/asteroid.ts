@@ -2,12 +2,33 @@ import type { Locale } from "./item-names";
 
 const asteroids = {
   CC1: { name: "CC1", region: "cubecorp", composition: "carbonite" },
-  // FIXME: ここから
+  CC2: { name: "CC2", region: "cubecorp", composition: "silicate" },
+  CC3: { name: "CC3", region: "cubecorp", composition: "carbonite" },
+  CC4: { name: "CC4", region: "cubecorp", composition: "metallic" },
+  MM1: { name: "MM1", region: "medusaminerals", composition: "metallic" },
+  MM2: { name: "MM2", region: "medusaminerals", composition: "carbonite" },
+  MM3: { name: "MM3", region: "medusaminerals", composition: "metallic" },
+  MM4: { name: "MM4", region: "medusaminerals", composition: "silicate" },
+  TW1: { name: "TW1", region: "twgems", composition: "carbonite" },
+  TW2: { name: "TW2", region: "twgems", composition: "carbonite" },
+  TW3: { name: "TW3", region: "twgems", composition: "silicate" },
+  TW4: { name: "TW4", region: "twgems", composition: "silicate" },
+  BT1: { name: "BT1", region: "blacktidal", composition: "silicate" },
+  BT2: { name: "BT2", region: "blacktidal", composition: "metallic" },
+  BT3: { name: "BT3", region: "blacktidal", composition: "silicate" },
+  BT4: { name: "BT4", region: "blacktidal", composition: "carbonite" },
+  CV1: { name: "CV1", region: "ceresvesta", composition: "silicate" },
+  CV2: { name: "CV2", region: "ceresvesta", composition: "carbonite" },
+  CV3: { name: "CV3", region: "ceresvesta", composition: "silicate" },
+  CV4: { name: "CV4", region: "ceresvesta", composition: "metallic" },
 } as const;
 
 const regionNames = {
   cubecorp: { en: "Cube Corp" },
-  // FIXME: ここから
+  medusaminerals: { en: "Medusa Minerals" },
+  twgems: { en: "TW Gems" },
+  blacktidal: { en: "Black Tidal" },
+  ceresvesta: { en: "Ceres Vesta" },
 } as const;
 
 const compositionNames = {
@@ -22,36 +43,6 @@ export const genericAsteroidNames = {
   "metallic-asteroids": { en: "Metallic Asteroids" },
   "silicate-asteroids": { en: "Silicate Asteroids" },
   any: { en: "Any Asteroid" },
-
-  // // Cube Corp
-  // CC1: { en: "CC1 - Cube Corp (Carbonite)" },
-  // CC2: { en: "CC2 - Cube Corp (Silicate)" },
-  // CC3: { en: "CC3 - Cube Corp (Carbonite)" },
-  // CC4: { en: "CC4 - Cube Corp (Metallic)" },
-
-  // // Medusa Minerals
-  // MM1: { en: "MM1 - Medusa Minerals (Metallic)" },
-  // MM2: { en: "MM2 - Medusa Minerals (Carbonite)" },
-  // MM3: { en: "MM3 - Medusa Minerals (Metallic)" },
-  // MM4: { en: "MM4 - Medusa Minerals (Silicate)" },
-
-  // // TW Gems
-  // TW1: { en: "TW1 - TW Gems (Carbonite)" },
-  // TW2: { en: "TW2 - TW Gems (Carbonite)" },
-  // TW3: { en: "TW3 - TW Gems (Silicate)" },
-  // TW4: { en: "TW4 - TW Gems (Silicate)" },
-
-  // // Black Tidal
-  // BT1: { en: "BT1 - Black Tidal (Silicate)" },
-  // BT2: { en: "BT2 - Black Tidal (Metallic)" },
-  // BT3: { en: "BT3 - Black Tidal (Silicate)" },
-  // BT4: { en: "BT4 - Black Tidal (Carbonite)" },
-
-  // // Ceres Vesta
-  // CV1: { en: "CV1 - Ceres Vesta (Silicate)" },
-  // CV2: { en: "CV2 - Ceres Vesta (Carbonite)" },
-  // CV3: { en: "CV3 - Ceres Vesta (Silicate)" },
-  // CV4: { en: "CV4 - Ceres Vesta (Metallic)" },
 } satisfies {
   [asteroidId: string]: {
     en: string;

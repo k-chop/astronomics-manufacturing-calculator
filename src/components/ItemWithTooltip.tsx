@@ -40,7 +40,7 @@ export function ItemWithTooltip({
         )}
       </span>
       {hasTooltip && (
-        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
+        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
           {hasAliasTooltip && (
             <div className="mb-2">
               <div className="font-semibold mb-1">Can use any of:</div>
@@ -50,12 +50,23 @@ export function ItemWithTooltip({
           {showFoundOn && (
             <div>
               <div className="font-semibold mb-1">Found on:</div>
-              <ul className="list-disc list-inside">
-                {rawMaterial.foundOn.map((asteroid) => (
-                  // FIXME: ここでregion, compositionがある場合はname, region, compositionを縦に揃うように表示したい
-                  <li key={asteroid}>{getAsteroidInfo(asteroid, locale)}</li>
-                ))}
-              </ul>
+              <div className="space-y-0.5">
+                {rawMaterial.foundOn.map((asteroid) => {
+                  const info = getAsteroidInfo(asteroid, locale);
+                  if (info.region && info.compositon) {
+                    return (
+                      <div key={asteroid} className="flex gap-2 whitespace-nowrap">
+                        <span className="font-mono inline-block w-9 text-right">{info.name}</span>
+                        <span>-</span>
+                        <span className="inline-block min-w-32">{info.region}</span>
+                        <span className="text-gray-400">({info.compositon})</span>
+                      </div>
+                    );
+                  } else {
+                    return <div key={asteroid}>{info.name}</div>;
+                  }
+                })}
+              </div>
             </div>
           )}
         </span>
