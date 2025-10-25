@@ -1,10 +1,10 @@
-export type RecipeInput = {
+export type ItemStack = {
   item: string;
   amount: number;
 };
 
 export type RecipeMethod = {
-  inputs: RecipeInput[];
+  inputs: ItemStack[];
   amount: number;
   machine: string;
   duration: number; // seconds
