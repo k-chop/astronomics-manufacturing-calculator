@@ -27,6 +27,22 @@ function mergeItemStacks(stacks: ItemStack[]): ItemStack[] {
   }));
 }
 
+function generateCombinations<T>(arrays: T[][]): T[][] {
+  if (arrays.length === 0) return [[]];
+  if (arrays.length === 1) return arrays[0].map((item) => [item]);
+
+  const [first, ...rest] = arrays;
+  const restCombinations = generateCombinations(rest);
+
+  const result: T[][] = [];
+  for (const item of first) {
+    for (const combination of restCombinations) {
+      result.push([item, ...combination]);
+    }
+  }
+  return result;
+}
+
 export function calculateManufacturing(
   itemId: string,
   amount: number,
@@ -64,53 +80,67 @@ export function calculateManufacturing(
       duration: method.duration,
     };
 
-    let totalDuration = method.duration * timesNeeded;
-    const allRecipes: CalculationRecipe[] = [currentRecipe];
-    const allRawMaterials: ItemStack[] = [];
-
     // 各入力材料について再帰的に計算
+    // 原材料でも製造レシピがある場合は、両方のパターンを生成する必要がある
+    const inputPatterns: CalculationResult[][] = [];
+
     for (const input of method.inputs) {
       const requiredAmount = input.amount * timesNeeded;
+      const patterns: CalculationResult[] = [];
 
-      // 原材料の場合
-      if (isRawMaterial(input.item)) {
-        allRawMaterials.push({
-          item: input.item,
-          amount: requiredAmount,
-        });
-        continue;
-      }
-
-      // 製造可能なアイテムの場合、再帰呼び出し
+      // 製造可能かチェック
       const subResults = calculateManufacturing(
         input.item,
         requiredAmount,
         new Set([...visited, itemId]),
       );
 
-      // サブレシピが見つからない、または全て循環参照の場合
-      if (!subResults || subResults.length === 0) {
-        // このアイテムは製造できないが原材料でもない = データ不整合
-        // とりあえず原材料として扱う
-        allRawMaterials.push({
-          item: input.item,
-          amount: requiredAmount,
-        });
-        continue;
+      // 製造レシピがある場合、それらをパターンに追加
+      if (subResults && subResults.length > 0) {
+        patterns.push(...subResults);
       }
 
-      // 最初のサブレシピを選択
-      const subResult = subResults[0];
-      totalDuration += subResult.totalDuration;
-      allRecipes.push(...subResult.recipes);
-      allRawMaterials.push(...subResult.totalItems);
+      // 原材料の場合、直接採取するパターンも追加
+      if (isRawMaterial(input.item)) {
+        patterns.push({
+          totalDuration: 0,
+          totalItems: [{ item: input.item, amount: requiredAmount }],
+          recipes: [],
+        });
+      }
+
+      // パターンが1つもない場合（データ不整合）、原材料として扱う
+      if (patterns.length === 0) {
+        patterns.push({
+          totalDuration: 0,
+          totalItems: [{ item: input.item, amount: requiredAmount }],
+          recipes: [],
+        });
+      }
+
+      inputPatterns.push(patterns);
     }
 
-    results.push({
-      totalDuration,
-      totalItems: mergeItemStacks(allRawMaterials),
-      recipes: allRecipes,
-    });
+    // すべての入力材料のパターンの組み合わせを生成
+    const combinations = generateCombinations(inputPatterns);
+
+    for (const combination of combinations) {
+      let combinedDuration = method.duration * timesNeeded;
+      const combinedRecipes: CalculationRecipe[] = [currentRecipe];
+      const combinedRawMaterials: ItemStack[] = [];
+
+      for (const pattern of combination) {
+        combinedDuration += pattern.totalDuration;
+        combinedRecipes.push(...pattern.recipes);
+        combinedRawMaterials.push(...pattern.totalItems);
+      }
+
+      results.push({
+        totalDuration: combinedDuration,
+        totalItems: mergeItemStacks(combinedRawMaterials),
+        recipes: combinedRecipes,
+      });
+    }
   }
 
   return results.length > 0 ? results : null;

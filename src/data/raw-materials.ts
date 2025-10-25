@@ -22,6 +22,12 @@ export const rawMaterials: RawMaterialMap = {
     foundOn: ["silicate-asteroids"],
   },
 
+  // Universal Resources
+  biomass: {
+    id: "biomass",
+    foundOn: ["any"],
+  },
+
   // Minerals
   amazonite: {
     id: "amazonite",
