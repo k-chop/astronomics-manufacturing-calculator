@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getItemName } from "../data/item-names";
+import { getItemName, type Locale } from "../data/item-names";
 import type { ProductionPlan } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
@@ -12,7 +12,7 @@ type ProductionPlanListProps = {
     materialId: string,
     collected: number,
   ) => void;
-  locale?: string;
+  locale?: Locale;
 };
 
 export function ProductionPlanList({

@@ -1,4 +1,4 @@
-import { getItemName } from "../data/item-names";
+import { getItemName, type Locale } from "../data/item-names";
 import type { CalculationResult } from "../lib/calculator";
 import { formatDuration } from "../lib/format-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
@@ -10,7 +10,7 @@ type ManufacturingResultProps = {
   onAmountChange: (newAmount: number) => void;
   onReset: () => void;
   onAddToPlan: () => void;
-  locale?: string;
+  locale?: Locale;
 };
 
 export function ManufacturingResult({

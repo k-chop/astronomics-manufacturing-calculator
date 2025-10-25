@@ -1,6 +1,8 @@
+import type { AsteroidName } from "./asteroid-names";
+
 export type RawMaterial = {
   id: string;
-  foundOn: string[];
+  foundOn: AsteroidName[];
 };
 
 export type RawMaterialMap = {

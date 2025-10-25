@@ -1,12 +1,12 @@
 import { getAliasItems } from "../data/aliases";
 import { getAsteroidName } from "../data/asteroid-names";
-import { getItemName } from "../data/item-names";
+import { getItemName, type Locale } from "../data/item-names";
 import { rawMaterials } from "../data/raw-materials";
 import { RawMaterialIcon } from "./RawMaterialIcon";
 
 type ItemWithTooltipProps = {
   itemId: string;
-  locale?: string;
+  locale?: Locale;
   className?: string;
   alwaysShowUnderline?: boolean;
 };

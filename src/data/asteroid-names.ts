@@ -1,10 +1,6 @@
-export type AsteroidNamesMap = {
-  [asteroidId: string]: {
-    en: string;
-  };
-};
+import type { Locale } from "./item-names";
 
-export const asteroidNames: AsteroidNamesMap = {
+export const asteroidNames = {
   // Generic types
   "carbonite-asteroids": { en: "Carbonite Asteroids" },
   "metallic-asteroids": { en: "Metallic Asteroids" },
@@ -40,11 +36,17 @@ export const asteroidNames: AsteroidNamesMap = {
   CV2: { en: "CV2 - Ceres Vesta (Carbonite)" },
   CV3: { en: "CV3 - Ceres Vesta (Silicate)" },
   CV4: { en: "CV4 - Ceres Vesta (Metallic)" },
+} satisfies {
+  [asteroidId: string]: {
+    en: string;
+  };
 };
 
-/**
- * Get the display name for an asteroid
- */
-export function getAsteroidName(asteroidId: string, locale = "en"): string {
+export type AsteroidName = keyof typeof asteroidNames;
+
+export function getAsteroidName(
+  asteroidId: AsteroidName,
+  locale: Locale = "en",
+): string {
   return asteroidNames[asteroidId]?.[locale] ?? asteroidId;
 }

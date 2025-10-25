@@ -3,6 +3,7 @@ export type LocalizedNames = {
   // 将来的に他の言語を追加
   // ja?: string;
 };
+export type Locale = keyof LocalizedNames;
 
 export type ItemNamesMap = {
   [itemId: string]: LocalizedNames;

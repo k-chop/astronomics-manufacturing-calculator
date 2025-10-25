@@ -1,10 +1,10 @@
 import type { ItemStack } from "../data/recipes";
-import type { CalculationResult } from "./calculator";
 import type {
   MaterialProgress,
   ProductionPlan,
   ProductionPlanItem,
 } from "../types/production-plan";
+import type { CalculationResult } from "./calculator";
 
 /**
  * ユニークIDを生成
