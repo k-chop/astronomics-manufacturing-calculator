@@ -10,9 +10,7 @@ export type ItemNamesMap = {
 
 export const itemNames: ItemNamesMap = {
   // Aliases
-  "any-gem": {
-    en: "Any Gem (Ruby, Sapphire, Emerald, Topaz, Amethyst, Aquamarine, Diamond, Onyx)",
-  },
+  "any-gem": { en: "Any Gem" },
 
   // Raw Materials - Surface Rocks
   carbon: { en: "Carbon" },

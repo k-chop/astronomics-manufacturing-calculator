@@ -1,3 +1,4 @@
+import { getAliasItems } from "../data/aliases";
 import { getItemName } from "../data/item-names";
 import type { CalculationResult } from "../lib/calculator";
 
@@ -44,14 +45,28 @@ export function ManufacturingResult({
           <div className="mb-4">
             <div className="font-semibold mb-2">Required Raw Materials:</div>
             <div className="space-y-1">
-              {result.totalItems.map((item) => (
-                <div key={item.item} className="flex items-center gap-2">
-                  <span className="text-gray-700">{getItemName(item.item, locale)}</span>
-                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
-                    × {item.amount}
-                  </span>
-                </div>
-              ))}
+              {result.totalItems.map((item) => {
+                const aliasItems = getAliasItems(item.item);
+                const hasTooltip = aliasItems !== undefined;
+
+                return (
+                  <div key={item.item} className="flex items-center gap-2">
+                    <span className="relative group">
+                      <span className="text-gray-700 cursor-help border-b border-dotted border-gray-400">
+                        {getItemName(item.item, locale)}
+                      </span>
+                      {hasTooltip && (
+                        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
+                          {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                      × {item.amount}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -77,14 +92,28 @@ export function ManufacturingResult({
                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
                     {/* Inputs */}
                     <div className="space-y-1">
-                      {recipe.inputs.map((input) => (
-                        <div key={input.item} className="text-gray-700">
-                          {getItemName(input.item, locale)}
-                          <span className="font-mono text-xs ml-1">
-                            × {input.amount}
-                          </span>
-                        </div>
-                      ))}
+                      {recipe.inputs.map((input) => {
+                        const aliasItems = getAliasItems(input.item);
+                        const hasTooltip = aliasItems !== undefined;
+
+                        return (
+                          <div key={input.item} className="text-gray-700">
+                            <span className="relative group">
+                              <span className={hasTooltip ? "cursor-help border-b border-dotted border-gray-400" : ""}>
+                                {getItemName(input.item, locale)}
+                              </span>
+                              {hasTooltip && (
+                                <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
+                                  {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-mono text-xs ml-1">
+                              × {input.amount}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Arrow */}

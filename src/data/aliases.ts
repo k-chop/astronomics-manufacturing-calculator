@@ -9,13 +9,20 @@ export type AliasMap = {
 export const aliases: AliasMap = {
   "any-gem": [
     "ruby",
+    "cracked-ruby",
     "sapphire",
+    "cracked-sapphire",
     "emerald",
+    "cracked-emerald",
     "topaz",
-    "amethyst",
+    "cracked-topaz",
     "aquamarine",
+    "cracked-aquamarine",
+    "opal",
+    "cracked-opal",
+    "citrine",
+    "cracked-citrine",
     "diamond",
-    "onyx",
   ],
 };
 
@@ -54,4 +61,12 @@ export function getAliasForItem(itemId: string): string {
     }
   }
   return itemId;
+}
+
+/**
+ * Get the list of item IDs that belong to an alias.
+ * Returns undefined if the item is not an alias.
+ */
+export function getAliasItems(itemId: string): string[] | undefined {
+  return aliases[itemId];
 }
