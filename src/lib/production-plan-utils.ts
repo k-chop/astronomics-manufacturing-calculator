@@ -10,7 +10,7 @@ import type { CalculationResult } from "./calculator";
  * ユニークIDを生成
  */
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 /**
