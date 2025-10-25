@@ -1,17 +1,45 @@
-import { useState, useId } from "react";
+import { useState, useId, useEffect } from "react";
 import { ItemSearch } from "./components/ItemSearch";
 import { ManufacturingResult } from "./components/ManufacturingResult";
+import { MaterialsSummary } from "./components/MaterialsSummary";
+import { ProductionPlanList } from "./components/ProductionPlanList";
 import { getItemName } from "./data/item-names";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
+import {
+  loadProductionPlan,
+  saveProductionPlan,
+} from "./lib/production-plan-storage";
+import {
+  addItemToPlan,
+  removeItemFromPlan,
+  toggleItemCompletion,
+  updateMaterialProgress,
+  aggregateMaterials,
+} from "./lib/production-plan-utils";
 import { getMinimumAmount } from "./lib/recipe-utils";
+import type { ProductionPlan } from "./types/production-plan";
 
 export const App = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [results, setResults] = useState<CalculationResult[] | null>(null);
+  const [productionPlan, setProductionPlan] = useState<ProductionPlan>({
+    items: [],
+  });
   const itemSearchId = useId();
   const amountInputId = useId();
+
+  // localStorageから計画を読み込み
+  useEffect(() => {
+    const loadedPlan = loadProductionPlan();
+    setProductionPlan(loadedPlan);
+  }, []);
+
+  // 計画が変更されたらlocalStorageに保存
+  useEffect(() => {
+    saveProductionPlan(productionPlan);
+  }, [productionPlan]);
 
   const handleItemSelect = (itemId: string) => {
     const minAmount = getMinimumAmount(itemId);
@@ -35,6 +63,37 @@ export const App = () => {
       const minAmount = getMinimumAmount(selectedItem);
       handleAmountChange(minAmount);
     }
+  };
+
+  const handleAddToPlan = () => {
+    if (selectedItem && results && results.length > 0) {
+      const newPlan = addItemToPlan(productionPlan, selectedItem, amount, results);
+      setProductionPlan(newPlan);
+    }
+  };
+
+  const handleRemoveFromPlan = (itemId: string) => {
+    const newPlan = removeItemFromPlan(productionPlan, itemId);
+    setProductionPlan(newPlan);
+  };
+
+  const handleToggleCompletion = (itemId: string) => {
+    const newPlan = toggleItemCompletion(productionPlan, itemId);
+    setProductionPlan(newPlan);
+  };
+
+  const handleUpdateMaterialProgress = (
+    itemId: string,
+    materialId: string,
+    collected: number,
+  ) => {
+    const newPlan = updateMaterialProgress(
+      productionPlan,
+      itemId,
+      materialId,
+      collected,
+    );
+    setProductionPlan(newPlan);
   };
 
   return (
@@ -121,11 +180,22 @@ export const App = () => {
         </div>
 
         {results && selectedItem && (
-          <ManufacturingResult
-            results={results}
-            targetItem={selectedItem}
-            targetAmount={amount}
-          />
+          <>
+            <ManufacturingResult
+              results={results}
+              targetItem={selectedItem}
+              targetAmount={amount}
+            />
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={handleAddToPlan}
+                className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
+              >
+                Add to Production Plan
+              </button>
+            </div>
+          </>
         )}
 
         {results === null && selectedItem && (
@@ -133,6 +203,23 @@ export const App = () => {
             No manufacturing recipe found for this item. It may only be available as a raw material.
           </div>
         )}
+
+        {/* Total Materials Summary */}
+        {productionPlan.items.length > 0 && (
+          <div className="mt-8">
+            <MaterialsSummary materials={aggregateMaterials(productionPlan)} />
+          </div>
+        )}
+
+        {/* Production Plan List */}
+        <div className="mt-8">
+          <ProductionPlanList
+            plan={productionPlan}
+            onRemoveItem={handleRemoveFromPlan}
+            onToggleCompletion={handleToggleCompletion}
+            onUpdateMaterialProgress={handleUpdateMaterialProgress}
+          />
+        </div>
 
         {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
