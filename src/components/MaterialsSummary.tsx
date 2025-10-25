@@ -1,9 +1,10 @@
+import type { Locale } from "../data/item-names";
 import type { ItemStack } from "../data/recipes";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type MaterialsSummaryProps = {
   materials: ItemStack[];
-  locale?: string;
+  locale?: Locale;
 };
 
 export function MaterialsSummary({
