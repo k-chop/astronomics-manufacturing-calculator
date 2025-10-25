@@ -22,6 +22,7 @@ export function ItemWithTooltip({
   const hasAliasTooltip = aliasItems !== undefined;
   const hasRawMaterialTooltip = rawMaterial !== undefined;
   const hasTooltip = hasAliasTooltip || hasRawMaterialTooltip;
+  const showFoundOn = hasRawMaterialTooltip && rawMaterial.foundOn.length !== 0;
 
   const underlineClass =
     hasTooltip || alwaysShowUnderline
@@ -46,7 +47,7 @@ export function ItemWithTooltip({
               {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
             </div>
           )}
-          {hasRawMaterialTooltip && (
+          {showFoundOn && (
             <div>
               <div className="font-semibold mb-1">Found on:</div>
               {rawMaterial.foundOn.map((asteroid) => getAsteroidName(asteroid, locale)).join(", ")}
