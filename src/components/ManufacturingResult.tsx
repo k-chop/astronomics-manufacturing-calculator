@@ -45,7 +45,6 @@ export function ManufacturingResult({
                     itemId={item.item}
                     locale={locale}
                     className="text-gray-700"
-                    alwaysShowUnderline
                   />
                   <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
                     × {item.amount}
