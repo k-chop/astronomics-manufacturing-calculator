@@ -7,6 +7,7 @@ export type CalculationRecipe = {
   inputs: ItemStack[];
   outputs: ItemStack[];
   duration: number;
+  count: number; // このレシピを何回実行するか
 };
 
 export type CalculationResult = {
@@ -67,17 +68,14 @@ export function calculateManufacturing(
 
     // 必要な製造回数を計算
     const timesNeeded = Math.ceil(amount / method.amount);
-    const totalOutputAmount = timesNeeded * method.amount;
 
-    // この製造レシピの情報
+    // この製造レシピの情報（1バッチあたり）
     const currentRecipe: CalculationRecipe = {
       machine: method.machine,
-      inputs: method.inputs.map((input) => ({
-        item: input.item,
-        amount: input.amount * timesNeeded,
-      })),
-      outputs: [{ item: itemId, amount: totalOutputAmount }],
+      inputs: method.inputs,
+      outputs: [{ item: itemId, amount: method.amount }],
       duration: method.duration,
+      count: timesNeeded,
     };
 
     // 各入力材料について再帰的に計算
