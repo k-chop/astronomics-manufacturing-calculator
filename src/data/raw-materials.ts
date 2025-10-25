@@ -11,7 +11,7 @@ export const rawMaterials: RawMaterialMap = {
   // Aliases
   "any-gem": {
     id: "any-gem",
-    foundOn: ["metallic-asteroids", "carbonite-asteroids", "silicate-asteroids"],
+    foundOn: [],
   },
 
   // Surface Rocks
