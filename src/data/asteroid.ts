@@ -57,19 +57,14 @@ export function getAsteroidInfo(
   asteroidId: AsteroidName,
   locale: Locale = "en",
 ): { name: string; region?: string; compositon?: string } {
-  // @ts-expect-error めんどいので無視
-  if (asteroids[asteroidId]) {
-    // @ts-expect-error めんどいので無視
-    const a = asteroids[asteroidId];
+  if (asteroidId in asteroids) {
+    const a = asteroids[asteroidId as keyof typeof asteroids];
     return {
       name: a.name,
-      // @ts-expect-error めんどいので無視
       region: regionNames[a.region][locale],
-      // @ts-expect-error めんどいので無視
       compositon: compositionNames[a.composition][locale],
     };
   } else {
-    // @ts-expect-error めんどいので無視
-    return { name: genericAsteroidNames[asteroidId] };
+    return { name: genericAsteroidNames[asteroidId as keyof typeof genericAsteroidNames][locale] };
   }
 }
