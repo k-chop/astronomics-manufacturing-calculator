@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useId } from "react";
 import { ItemSearch } from "./components/ItemSearch";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { getItemName } from "./data/item-names";
@@ -9,6 +9,8 @@ export const App = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [results, setResults] = useState<CalculationResult[] | null>(null);
+  const itemSearchId = useId();
+  const amountInputId = useId();
 
   const handleItemSelect = (itemId: string) => {
     setSelectedItem(itemId);
@@ -34,19 +36,20 @@ export const App = () => {
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
                 Select Item
               </label>
-              <ItemSearch onSelect={handleItemSelect} />
+              <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
             </div>
 
             {selectedItem && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor={amountInputId} className="block text-sm font-medium text-gray-700 mb-2">
                   Amount
                 </label>
                 <div className="flex items-center gap-4">
                   <input
+                    id={amountInputId}
                     type="number"
                     min="1"
                     value={amount}

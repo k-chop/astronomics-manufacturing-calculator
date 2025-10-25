@@ -30,7 +30,7 @@ export function ManufacturingResult({
 
       {results.map((result, patternIndex) => (
         <div
-          key={patternIndex}
+          key={`pattern-${patternIndex}-${result.totalDuration}`}
           className="border border-gray-300 rounded-lg p-4 bg-white shadow"
         >
           <div className="mb-3 pb-3 border-b border-gray-200">
@@ -44,8 +44,8 @@ export function ManufacturingResult({
           <div className="mb-4">
             <div className="font-semibold mb-2">Required Raw Materials:</div>
             <div className="space-y-1">
-              {result.totalItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
+              {result.totalItems.map((item) => (
+                <div key={item.item} className="flex items-center gap-2">
                   <span className="text-gray-700">{getItemName(item.item, locale)}</span>
                   <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
                     × {item.amount}
@@ -61,7 +61,7 @@ export function ManufacturingResult({
             <div className="space-y-3">
               {result.recipes.map((recipe, recipeIdx) => (
                 <div
-                  key={recipeIdx}
+                  key={`recipe-${recipeIdx}-${recipe.machine}-${recipe.outputs[0].item}`}
                   className="border border-gray-200 rounded p-3 bg-gray-50"
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -77,8 +77,8 @@ export function ManufacturingResult({
                   <div className="grid grid-cols-3 gap-2 items-center text-sm">
                     {/* Inputs */}
                     <div className="space-y-1">
-                      {recipe.inputs.map((input, idx) => (
-                        <div key={idx} className="text-gray-700">
+                      {recipe.inputs.map((input) => (
+                        <div key={input.item} className="text-gray-700">
                           {getItemName(input.item, locale)}
                           <span className="font-mono text-xs ml-1">
                             × {input.amount}
@@ -95,8 +95,8 @@ export function ManufacturingResult({
 
                     {/* Outputs */}
                     <div className="space-y-1">
-                      {recipe.outputs.map((output, idx) => (
-                        <div key={idx} className="text-gray-700 font-medium">
+                      {recipe.outputs.map((output) => (
+                        <div key={output.item} className="text-gray-700 font-medium">
                           {getItemName(output.item, locale)}
                           <span className="font-mono text-xs ml-1">
                             × {output.amount}
