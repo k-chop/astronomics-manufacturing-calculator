@@ -143,7 +143,7 @@ describe("calculateManufacturing", () => {
     const results = calculateManufacturing("purified-water", 40);
 
     expect(results).toEqual([
-            {
+      {
         totalDuration: 60,
         totalItems: [{ item: "water", amount: 50 }],
         recipes: [
@@ -209,7 +209,7 @@ describe("calculateManufacturing", () => {
     // carbonは原材料（carbonite-asteroidsで採取可能）だが、biomassからも製造できる
     // 3つのパターン: water経由、biomass直接、carbon直接
     expect(results).toEqual([
-            {
+      {
         totalDuration: 25,
         totalItems: [{ item: "carbon", amount: 50 }],
         recipes: [
@@ -222,7 +222,7 @@ describe("calculateManufacturing", () => {
           },
         ],
       },
-            {
+      {
         totalDuration: 150,
         totalItems: [{ item: "biomass", amount: 250 }],
         recipes: [

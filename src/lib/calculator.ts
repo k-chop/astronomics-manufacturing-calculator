@@ -150,5 +150,7 @@ export function calculateManufacturing(
     }
   }
 
-  return results.length > 0 ? results.sort((a, b) => a.totalDuration - b.totalDuration) : null;
+  return results.length > 0
+    ? results.sort((a, b) => a.totalDuration - b.totalDuration)
+    : null;
 }
