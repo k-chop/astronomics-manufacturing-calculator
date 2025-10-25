@@ -1,3 +1,4 @@
+import { isAlias } from "../data/aliases";
 import { isRawMaterial } from "../data/raw-materials";
 import type { ItemStack } from "../data/recipes";
 import { recipes } from "../data/recipes";
@@ -86,14 +87,19 @@ export function calculateManufacturing(
       const requiredAmount = input.amount * timesNeeded;
       const patterns: CalculationResult[] = [];
 
+      // エイリアスの場合はそのまま原材料として扱う
+      // 将来的に特定のアイテム（ruby等）が必要なレシピが出てきても区別できる
       const isRaw = isRawMaterial(input.item);
 
-      // 製造可能かチェック
-      const subResults = calculateManufacturing(
-        input.item,
-        requiredAmount,
-        new Set([...visited, itemId]),
-      );
+      // エイリアスでない場合のみ製造レシピをチェック
+      let subResults: CalculationResult[] | null = null;
+      if (!isAlias(input.item)) {
+        subResults = calculateManufacturing(
+          input.item,
+          requiredAmount,
+          new Set([...visited, itemId]),
+        );
+      }
 
       // 原材料でない場合は、製造レシピが必須
       if (!isRaw) {
@@ -107,7 +113,7 @@ export function calculateManufacturing(
         if (subResults && subResults.length > 0) {
           patterns.push(...subResults);
         }
-        // 直接採取するパターンも追加
+        // 直接採取するパターンも追加（エイリアスの場合もそのまま）
         patterns.push({
           totalDuration: 0,
           totalItems: [{ item: input.item, amount: requiredAmount }],

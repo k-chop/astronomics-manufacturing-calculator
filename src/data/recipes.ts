@@ -210,49 +210,7 @@ export const recipes: RecipeMap = {
   ],
   "gem-dust": [
     {
-      inputs: [{ item: "aquamarine", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "citrine", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "emerald", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "opal", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "ruby", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "sapphire", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "topaz", amount: 10 }],
-      amount: 10,
-      machine: "crusher",
-      duration: 10,
-    },
-    {
-      inputs: [{ item: "diamond", amount: 10 }],
+      inputs: [{ item: "any-gem", amount: 10 }],
       amount: 10,
       machine: "crusher",
       duration: 10,

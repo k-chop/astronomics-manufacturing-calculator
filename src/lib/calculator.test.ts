@@ -172,35 +172,26 @@ describe("calculateManufacturing", () => {
     ]);
   });
 
-  it("8つの製造パスを持つアイテム: gem-dust", () => {
+  it("エイリアスを使ったレシピ: gem-dust (any-gemをそのまま原材料として扱う)", () => {
     const results = calculateManufacturing("gem-dust", 10);
 
     expect(results).not.toBeNull();
-    expect(results).toHaveLength(8);
+    expect(results).toHaveLength(1);
 
-    // 最初の結果(aquamarine)を確認
+    // any-gemはそのまま原材料として扱われる
     expect(results![0]).toEqual({
       totalDuration: 10,
-      totalItems: [{ item: "aquamarine", amount: 10 }],
+      totalItems: [{ item: "any-gem", amount: 10 }],
       recipes: [
         {
           machine: "crusher",
-          inputs: [{ item: "aquamarine", amount: 10 }],
+          inputs: [{ item: "any-gem", amount: 10 }],
           outputs: [{ item: "gem-dust", amount: 10 }],
           duration: 10,
           count: 1,
         },
       ],
     });
-
-    // すべての結果が同じ構造を持つことを確認
-    for (const result of results!) {
-      expect(result.totalDuration).toBe(10);
-      expect(result.totalItems).toHaveLength(1);
-      expect(result.totalItems[0].amount).toBe(10);
-      expect(result.recipes).toHaveLength(1);
-      expect(result.recipes[0].machine).toBe("crusher");
-    }
   });
 
   it("循環参照を含むレシピをスキップ: graphite", () => {

@@ -8,6 +8,12 @@ export type RawMaterialMap = {
 };
 
 export const rawMaterials: RawMaterialMap = {
+  // Aliases
+  "any-gem": {
+    id: "any-gem",
+    foundOn: ["metallic-asteroids", "carbonite-asteroids", "silicate-asteroids"],
+  },
+
   // Surface Rocks
   carbon: {
     id: "carbon",
