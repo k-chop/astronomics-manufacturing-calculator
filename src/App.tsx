@@ -133,6 +133,24 @@ export const App = () => {
             No manufacturing recipe found for this item. It may only be available as a raw material.
           </div>
         )}
+
+        {/* Footer */}
+        <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
+          <div className="space-y-1">
+            <div>Compatible with Astronomics version 0.77.5</div>
+            <div>
+              Data sourced from{" "}
+              <a
+                href="https://astronomics.wiki.gg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                Official Astronomics Wiki
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
