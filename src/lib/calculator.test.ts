@@ -195,25 +195,64 @@ describe("calculateManufacturing", () => {
   it("循環参照を含むレシピをスキップ: graphite", () => {
     const results = calculateManufacturing("graphite", 10);
 
-    // carbonは原材料ではないが、biomassから製造できる（biomassは原材料）
-    // biomassを原材料として採取するか、waterから製造するかの2パターン
-    expect(results).not.toBeNull();
-    expect(results!.length).toBe(3); // water経由、biomass直接、carbon直接の3パターン
-
-    // 最も速いパターン: carbonを直接原材料として採取（実際はraw-materialsにはない）
-    // 2番目: biomassを原材料として採取してcarbonを製造
-    expect(results![2]).toEqual({
-      totalDuration: 25,
-      totalItems: [{ item: "carbon", amount: 50 }],
-      recipes: [
-        {
-          machine: "carbonator",
-          inputs: [{ item: "carbon", amount: 50 }],
-          outputs: [{ item: "graphite", amount: 10 }],
-          duration: 25,
-        },
-      ],
-    });
+    // carbonは原材料（carbonite-asteroidsで採取可能）だが、biomassからも製造できる
+    // 3つのパターン: water経由、biomass直接、carbon直接
+    expect(results).toEqual([
+      {
+        totalDuration: 3150,
+        totalItems: [{ item: "water", amount: 2500 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "carbon", amount: 50 }],
+            outputs: [{ item: "graphite", amount: 10 }],
+            duration: 25,
+          },
+          {
+            machine: "carbonator",
+            inputs: [{ item: "biomass", amount: 250 }],
+            outputs: [{ item: "carbon", amount: 50 }],
+            duration: 25,
+          },
+          {
+            machine: "clarifier",
+            inputs: [{ item: "water", amount: 2500 }],
+            outputs: [{ item: "biomass", amount: 250 }],
+            duration: 60,
+          },
+        ],
+      },
+      {
+        totalDuration: 150,
+        totalItems: [{ item: "biomass", amount: 250 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "carbon", amount: 50 }],
+            outputs: [{ item: "graphite", amount: 10 }],
+            duration: 25,
+          },
+          {
+            machine: "carbonator",
+            inputs: [{ item: "biomass", amount: 250 }],
+            outputs: [{ item: "carbon", amount: 50 }],
+            duration: 25,
+          },
+        ],
+      },
+      {
+        totalDuration: 25,
+        totalItems: [{ item: "carbon", amount: 50 }],
+        recipes: [
+          {
+            machine: "carbonator",
+            inputs: [{ item: "carbon", amount: 50 }],
+            outputs: [{ item: "graphite", amount: 10 }],
+            duration: 25,
+          },
+        ],
+      },
+    ]);
   });
 
   it("複数回の製造が必要なケース: polymers 100個", () => {

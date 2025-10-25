@@ -88,6 +88,8 @@ export function calculateManufacturing(
       const requiredAmount = input.amount * timesNeeded;
       const patterns: CalculationResult[] = [];
 
+      const isRaw = isRawMaterial(input.item);
+
       // 製造可能かチェック
       const subResults = calculateManufacturing(
         input.item,
@@ -95,13 +97,19 @@ export function calculateManufacturing(
         new Set([...visited, itemId]),
       );
 
-      // 製造レシピがある場合、それらをパターンに追加
-      if (subResults && subResults.length > 0) {
-        patterns.push(...subResults);
-      }
-
-      // 原材料の場合、直接採取するパターンも追加
-      if (isRawMaterial(input.item)) {
+      // 原材料でない場合は、製造レシピが必須
+      if (!isRaw) {
+        if (subResults && subResults.length > 0) {
+          patterns.push(...subResults);
+        }
+        // 製造レシピがない非原材料の場合、patternsが空になる
+        // この場合、このレシピ全体をスキップする必要がある
+      } else {
+        // 原材料の場合：製造レシピがあれば両方のパターンを追加
+        if (subResults && subResults.length > 0) {
+          patterns.push(...subResults);
+        }
+        // 直接採取するパターンも追加
         patterns.push({
           totalDuration: 0,
           totalItems: [{ item: input.item, amount: requiredAmount }],
@@ -109,16 +117,17 @@ export function calculateManufacturing(
         });
       }
 
-      // パターンが1つもない場合（データ不整合）、原材料として扱う
+      // パターンが空の場合、このレシピ全体をスキップ
       if (patterns.length === 0) {
-        patterns.push({
-          totalDuration: 0,
-          totalItems: [{ item: input.item, amount: requiredAmount }],
-          recipes: [],
-        });
+        inputPatterns.push([]);
+      } else {
+        inputPatterns.push(patterns);
       }
+    }
 
-      inputPatterns.push(patterns);
+    // いずれかの入力材料のパターンが空の場合、このレシピはスキップ
+    if (inputPatterns.some((patterns) => patterns.length === 0)) {
+      continue;
     }
 
     // すべての入力材料のパターンの組み合わせを生成
