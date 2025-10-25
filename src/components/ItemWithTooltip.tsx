@@ -1,5 +1,8 @@
 import { getAliasItems } from "../data/aliases";
+import { getAsteroidName } from "../data/asteroid-names";
 import { getItemName } from "../data/item-names";
+import { rawMaterials } from "../data/raw-materials";
+import { RawMaterialIcon } from "./RawMaterialIcon";
 
 type ItemWithTooltipProps = {
   itemId: string;
@@ -15,7 +18,10 @@ export function ItemWithTooltip({
   alwaysShowUnderline = false,
 }: ItemWithTooltipProps) {
   const aliasItems = getAliasItems(itemId);
-  const hasTooltip = aliasItems !== undefined;
+  const rawMaterial = rawMaterials[itemId];
+  const hasAliasTooltip = aliasItems !== undefined;
+  const hasRawMaterialTooltip = rawMaterial !== undefined;
+  const hasTooltip = hasAliasTooltip || hasRawMaterialTooltip;
 
   const underlineClass =
     hasTooltip || alwaysShowUnderline
@@ -26,10 +32,26 @@ export function ItemWithTooltip({
     <span className="relative group">
       <span className={`${className} ${underlineClass}`}>
         {getItemName(itemId, locale)}
+        {hasRawMaterialTooltip && (
+          <span className="text-green-600">
+            <RawMaterialIcon />
+          </span>
+        )}
       </span>
       {hasTooltip && (
         <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-gray-800 text-white text-xs rounded px-3 py-2 z-10 shadow-lg">
-          {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
+          {hasAliasTooltip && (
+            <div className="mb-2">
+              <div className="font-semibold mb-1">Can use any of:</div>
+              {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
+            </div>
+          )}
+          {hasRawMaterialTooltip && (
+            <div>
+              <div className="font-semibold mb-1">Found on:</div>
+              {rawMaterial.foundOn.map((asteroid) => getAsteroidName(asteroid, locale)).join(", ")}
+            </div>
+          )}
         </span>
       )}
     </span>
