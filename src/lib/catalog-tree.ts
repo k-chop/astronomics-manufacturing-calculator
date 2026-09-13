@@ -28,6 +28,7 @@ export type TreeLeaf = {
   label: string;
   selection: Selection;
   isRaw: boolean;
+  searchText: string; // フィルタ用（小文字）。種別・カテゴリ・名前・id を含む
 };
 
 export type TreeBranch = {
@@ -51,6 +52,7 @@ function itemLeaf(itemId: string, locale: Locale): TreeLeaf {
     label: getItemName(itemId, locale),
     selection,
     isRaw: isRawMaterial(itemId),
+    searchText: `item ${getItemName(itemId, locale)} ${itemId}`.toLowerCase(),
   };
 }
 
@@ -114,6 +116,8 @@ function buildUpgradesBranch(locale: Locale): TreeBranch {
               label: `Lv${upgradeLevel.level}`,
               selection,
               isRaw: false,
+              searchText:
+                `upgrade ${getUpgradeCategoryName(category, locale)} ${getUpgradeName(upgrade.id, locale)} lv${upgradeLevel.level} ${upgrade.id}`.toLowerCase(),
             };
           }),
         })),
@@ -136,22 +140,14 @@ export function buildCatalogTree(locale: Locale = "en"): TreeBranch[] {
   ];
 }
 
-function leafMatches(leaf: TreeLeaf, lowerQuery: string): boolean {
-  if (leaf.label.toLowerCase().includes(lowerQuery)) return true;
-  const { selection } = leaf;
-  return selection.kind === "item" ? selection.itemId.includes(lowerQuery) : selection.upgradeId.includes(lowerQuery);
-}
-
-function filterNodes(nodes: TreeNode[], lowerQuery: string, parentMatches: boolean): TreeNode[] {
+function filterNodes(nodes: TreeNode[], terms: string[]): TreeNode[] {
   const result: TreeNode[] = [];
   for (const node of nodes) {
     if (node.kind === "leaf") {
-      if (parentMatches || leafMatches(node, lowerQuery)) result.push(node);
+      if (terms.every((term) => node.searchText.includes(term))) result.push(node);
       continue;
     }
-    // アップグレード名など branch のラベルがマッチした場合はその配下をすべて残す
-    const branchMatches = parentMatches || node.label.toLowerCase().includes(lowerQuery);
-    const children = filterNodes(node.children, lowerQuery, branchMatches);
+    const children = filterNodes(node.children, terms);
     if (children.length > 0) result.push({ ...node, children });
   }
   return result;
@@ -159,10 +155,13 @@ function filterNodes(nodes: TreeNode[], lowerQuery: string, parentMatches: boole
 
 /**
  * query にマッチする葉だけを残したツリーを返す（空になった branch は落とす）
- * branch のラベル自体がマッチした場合はその配下をすべて残す
+ * 空白区切りの各語をすべて含む葉（AND 検索）だけが残る。branch のラベルは検索対象にしない
  */
 export function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
-  const lowerQuery = query.trim().toLowerCase();
-  if (lowerQuery === "") return nodes;
-  return filterNodes(nodes, lowerQuery, false);
+  const terms = query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((term) => term !== "");
+  if (terms.length === 0) return nodes;
+  return filterNodes(nodes, terms);
 }

@@ -95,10 +95,31 @@ describe("filterTree", () => {
     ]);
   });
 
-  it("branch のラベルにマッチした場合はその配下をすべて残す", () => {
+  it("upgrade はアップグレード名でマッチし、全 Lv が残る", () => {
     const filtered = filterTree(tree, "fuel capacity");
     const leafIds = collectLeaves(filtered).map(({ leaf }) => leaf.id);
     expect(leafIds).toEqual(["upgrade:fuel-capacity:1", "upgrade:fuel-capacity:2", "upgrade:fuel-capacity:3"]);
+  });
+
+  it("空白区切りは AND 検索で、語順は問わない", () => {
+    expect(collectLeaves(filterTree(tree, "upgrade manufactur")).map(({ leaf }) => leaf.id)).toEqual([
+      "upgrade:manufacturing:1",
+      "upgrade:manufacturing:2",
+      "upgrade:manufacturing:3",
+    ]);
+    expect(collectLeaves(filterTree(tree, "  lv3   fuel ")).map(({ leaf }) => leaf.id)).toEqual([
+      "upgrade:fuel-capacity:3",
+    ]);
+  });
+
+  it("カテゴリや機械名などの branch ラベルは検索対象にしない", () => {
+    // "Manufactured" branch 配下のアイテムはヒットせず、Manufacturing upgrade だけが残る
+    expect(collectLeaves(filterTree(tree, "manufactur")).map(({ leaf }) => leaf.id)).toEqual([
+      "upgrade:manufacturing:1",
+      "upgrade:manufacturing:2",
+      "upgrade:manufacturing:3",
+    ]);
+    expect(filterTree(tree, "carbonator")).toEqual([]);
   });
 
   it("何もマッチしなければ空配列", () => {
