@@ -337,6 +337,7 @@ export type InventoryRow = {
   required: number;
   have: number;
   missing: number;
+  crafted: boolean; // 未完了エントリのいずれかのステップで作るもの（false なら集めてくるもの）
 };
 
 export type ReadyCraft = {
@@ -356,24 +357,35 @@ export type PlanAnalysis = {
 type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
 
 /**
- * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）を必要数の降順で
+ * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）
+ * 集めてくるもの（どのステップでも作らないもの）を先に、作るものを後に、それぞれ必要数の降順で並べる
  * missing は各プランの残りステップで作れる分を差し引いた不足。どのプランも使わない材料は在庫に残っていても表示しない
  */
 function buildInventoryRows(inventory: Inventory, pending: AnalyzedEntry[]): InventoryRow[] {
   const required = new Map<string, number>();
   const produced = new Map<string, number>();
+  const craftedItems = new Set<string>();
   for (const { analysis } of pending) {
     for (const demandStatus of analysis.demands) {
       addAmount(required, demandStatus.item, demandStatus.need);
       addAmount(produced, demandStatus.item, demandStatus.produced);
     }
+    for (const step of analysis.steps) {
+      for (const output of step.recipe.outputs) craftedItems.add(output.item);
+    }
   }
   return [...required]
-    .map(([item, amount]) => {
+    .map(([item, amount]): InventoryRow => {
       const have = inventory[item] ?? 0;
-      return { item, required: amount, have, missing: Math.max(0, amount - have - (produced.get(item) ?? 0)) };
+      return {
+        item,
+        required: amount,
+        have,
+        missing: Math.max(0, amount - have - (produced.get(item) ?? 0)),
+        crafted: craftedItems.has(item),
+      };
     })
-    .toSorted((a, b) => b.required - a.required);
+    .toSorted((a, b) => Number(a.crafted) - Number(b.crafted) || b.required - a.required);
 }
 
 function collectReadyCrafts(pending: AnalyzedEntry[]): ReadyCraft[] {

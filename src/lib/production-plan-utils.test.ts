@@ -371,10 +371,10 @@ describe("analyzePlan の rows", () => {
 
     // item エントリは最終成果物（Copper Wire 40）も行に出る（作れるので missing 0）
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "iron", required: 1010, have: 100, missing: 910 },
-      { item: "cobalt", required: 800, have: 0, missing: 800 },
-      { item: "copper-wire", required: 40, have: 0, missing: 0 },
-      { item: "copper", required: 30, have: 0, missing: 30 },
+      { item: "iron", required: 1010, have: 100, missing: 910, crafted: false },
+      { item: "cobalt", required: 800, have: 0, missing: 800, crafted: false },
+      { item: "copper", required: 30, have: 0, missing: 30, crafted: false },
+      { item: "copper-wire", required: 40, have: 0, missing: 0, crafted: true },
     ]);
   });
 
@@ -385,8 +385,8 @@ describe("analyzePlan の rows", () => {
     plan = setInventory(plan, "quantum-data-drives", 85);
     plan = setInventory(plan, "oxygen-gas", 650);
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "oxygen-gas", required: 650, have: 650, missing: 0 },
-      { item: "quantum-data-drives", required: 20, have: 85, missing: 0 },
+      { item: "oxygen-gas", required: 650, have: 650, missing: 0, crafted: false },
+      { item: "quantum-data-drives", required: 20, have: 85, missing: 0, crafted: true },
     ]);
 
     plan = toggleItemCompletion(plan, id);
@@ -401,9 +401,9 @@ describe("analyzePlan の rows と中間材料", () => {
     let plan = addUpgradeToPlan(emptyProductionPlan, "shuttle-equipment-delivery", 1);
     const id = plan.items[0].id;
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
-      { item: "gem-dust", required: 400, have: 0, missing: 0 },
-      { item: "any-gem", required: 400, have: 0, missing: 400 },
+      { item: "any-gem", required: 400, have: 0, missing: 400, crafted: false },
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0, crafted: true },
+      { item: "gem-dust", required: 400, have: 0, missing: 0, crafted: true },
     ]);
 
     // Any Gem を用意して Gem Dust を全部作る: Gem Dust の行が残り、次のクラフトがそこに出る
@@ -411,8 +411,8 @@ describe("analyzePlan の rows と中間材料", () => {
     plan = recordStepRuns(plan, id, 1, 40);
     expect(plan.inventory).toEqual({ "gem-dust": 400 });
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
-      { item: "gem-dust", required: 400, have: 400, missing: 0 },
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0, crafted: true },
+      { item: "gem-dust", required: 400, have: 400, missing: 0, crafted: true },
     ]);
     const crafts = analyzePlan(plan).craftsByOutput.get("fiber-optic-strands");
     expect(crafts?.map((craft) => [craft.recipe.outputs[0].item, craft.runs])).toEqual([["fiber-optic-strands", 8]]);
@@ -426,9 +426,9 @@ describe("analyzePlan の rows と中間材料", () => {
     );
     // gem-dust あと 250 → any-gem 250
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
-      { item: "gem-dust", required: 400, have: 150, missing: 0 },
-      { item: "any-gem", required: 250, have: 0, missing: 250 },
+      { item: "any-gem", required: 250, have: 0, missing: 250, crafted: false },
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0, crafted: true },
+      { item: "gem-dust", required: 400, have: 150, missing: 0, crafted: true },
     ]);
   });
 });
@@ -486,14 +486,14 @@ describe("analyzePlan の crafts", () => {
     let plan = graphitePlan({ carbon: 100 });
     const id = plan.items[0].id;
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "carbon", required: 100, have: 100, missing: 0 },
-      { item: "graphite", required: 20, have: 0, missing: 0 },
+      { item: "carbon", required: 100, have: 100, missing: 0, crafted: true },
+      { item: "graphite", required: 20, have: 0, missing: 0, crafted: true },
     ]);
 
     plan = recordStepRuns(plan, id, 0, 1);
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "carbon", required: 50, have: 50, missing: 0 },
-      { item: "graphite", required: 20, have: 10, missing: 0 },
+      { item: "carbon", required: 50, have: 50, missing: 0, crafted: true },
+      { item: "graphite", required: 20, have: 10, missing: 0, crafted: true },
     ]);
   });
 });
