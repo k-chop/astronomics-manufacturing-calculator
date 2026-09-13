@@ -24,10 +24,7 @@ export function ItemWithTooltip({
   const hasTooltip = hasAliasTooltip || hasRawMaterialTooltip;
   const showFoundOn = hasRawMaterialTooltip && rawMaterial.foundOn.length !== 0;
 
-  const underlineClass =
-    hasTooltip || alwaysShowUnderline
-      ? "cursor-help border-b border-dotted border-gray-400"
-      : "";
+  const underlineClass = hasTooltip || alwaysShowUnderline ? "cursor-help border-b border-dotted border-gray-400" : "";
 
   return (
     <span className="relative group">
@@ -44,9 +41,7 @@ export function ItemWithTooltip({
           {hasAliasTooltip && (
             <div className="mb-2">
               <div className="font-semibold mb-1">Can use any of:</div>
-              {aliasItems
-                .map((aliasItem) => getItemName(aliasItem, locale))
-                .join(", ")}
+              {aliasItems.map((aliasItem) => getItemName(aliasItem, locale)).join(", ")}
             </div>
           )}
           {showFoundOn && (
@@ -57,20 +52,11 @@ export function ItemWithTooltip({
                   const info = getAsteroidInfo(asteroid, locale);
                   if (info.region && info.compositon) {
                     return (
-                      <div
-                        key={asteroid}
-                        className="flex gap-2 whitespace-nowrap"
-                      >
-                        <span className="font-mono inline-block w-9 text-right">
-                          {info.name}
-                        </span>
+                      <div key={asteroid} className="flex gap-2 whitespace-nowrap">
+                        <span className="font-mono inline-block w-9 text-right">{info.name}</span>
                         <span>-</span>
-                        <span className="inline-block min-w-32">
-                          {info.region}
-                        </span>
-                        <span className="text-gray-400">
-                          ({info.compositon})
-                        </span>
+                        <span className="inline-block min-w-32">{info.region}</span>
+                        <span className="text-gray-400">({info.compositon})</span>
                       </div>
                     );
                   } else {

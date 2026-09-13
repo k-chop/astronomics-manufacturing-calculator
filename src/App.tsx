@@ -7,10 +7,7 @@ import { MaterialsSummary } from "./components/MaterialsSummary";
 import { ProductionPlanList } from "./components/ProductionPlanList";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
-import {
-  loadProductionPlan,
-  saveProductionPlan,
-} from "./lib/production-plan-storage";
+import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-storage";
 import {
   addItemToPlan,
   aggregateMaterials,
@@ -49,10 +46,7 @@ export const App = () => {
     const validAmount = Math.max(1, newAmount);
     setAmount(validAmount);
     if (selectedItem) {
-      const calculationResults = calculateManufacturing(
-        selectedItem,
-        validAmount,
-      );
+      const calculationResults = calculateManufacturing(selectedItem, validAmount);
       setResults(calculationResults);
     }
   };
@@ -66,12 +60,7 @@ export const App = () => {
 
   const handleAddToPlan = () => {
     if (selectedItem && results && results.length > 0) {
-      const newPlan = addItemToPlan(
-        productionPlan,
-        selectedItem,
-        amount,
-        results,
-      );
+      const newPlan = addItemToPlan(productionPlan, selectedItem, amount, results);
       updateProductionPlan(newPlan);
     }
   };
@@ -86,17 +75,8 @@ export const App = () => {
     updateProductionPlan(newPlan);
   };
 
-  const handleUpdateMaterialProgress = (
-    itemId: string,
-    materialId: string,
-    collected: number,
-  ) => {
-    const newPlan = updateMaterialProgress(
-      productionPlan,
-      itemId,
-      materialId,
-      collected,
-    );
+  const handleUpdateMaterialProgress = (itemId: string, materialId: string, collected: number) => {
+    const newPlan = updateMaterialProgress(productionPlan, itemId, materialId, collected);
     updateProductionPlan(newPlan);
   };
 
@@ -104,9 +84,7 @@ export const App = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-[1920px] mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">
-            Astronomics Manufacturing Calculator
-          </h1>
+          <h1 className="text-4xl font-bold text-gray-900">Astronomics Manufacturing Calculator</h1>
           <a
             href="https://github.com/k-chop/astronomics-manufacturing-calculator"
             target="_blank"
@@ -124,10 +102,7 @@ export const App = () => {
           <div className="space-y-8">
             {/* Select Item */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <label
-                htmlFor={itemSearchId}
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
                 Select Item
               </label>
               <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
@@ -147,8 +122,7 @@ export const App = () => {
 
             {results === null && selectedItem && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
-                No manufacturing recipe found for this item. It may only be
-                available as a raw material.
+                No manufacturing recipe found for this item. It may only be available as a raw material.
               </div>
             )}
           </div>
@@ -156,11 +130,7 @@ export const App = () => {
           {/* Right Column: Production Plan */}
           <div className="space-y-8">
             {/* Total Materials Summary */}
-            {productionPlan.items.length > 0 && (
-              <MaterialsSummary
-                materials={aggregateMaterials(productionPlan)}
-              />
-            )}
+            {productionPlan.items.length > 0 && <MaterialsSummary materials={aggregateMaterials(productionPlan)} />}
 
             {/* Production Plan List */}
             <ProductionPlanList

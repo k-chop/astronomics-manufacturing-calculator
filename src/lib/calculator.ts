@@ -59,9 +59,7 @@ export function calculateManufacturing(
 
   for (const method of methods) {
     // 循環参照チェック: 自分自身を材料に含む場合はスキップ
-    const hasCircularDependency = method.inputs.some(
-      (input) => input.item === itemId,
-    );
+    const hasCircularDependency = method.inputs.some((input) => input.item === itemId);
     if (hasCircularDependency) {
       continue;
     }
@@ -88,11 +86,7 @@ export function calculateManufacturing(
 
       const isRaw = isRawMaterial(input.item);
 
-      const subResults = calculateManufacturing(
-        input.item,
-        requiredAmount,
-        new Set([...visited, itemId]),
-      );
+      const subResults = calculateManufacturing(input.item, requiredAmount, new Set([...visited, itemId]));
 
       // 原材料でない場合は、製造レシピが必須
       if (!isRaw) {
@@ -149,7 +143,5 @@ export function calculateManufacturing(
     }
   }
 
-  return results.length > 0
-    ? results.toSorted((a, b) => a.totalDuration - b.totalDuration)
-    : null;
+  return results.length > 0 ? results.toSorted((a, b) => a.totalDuration - b.totalDuration) : null;
 }

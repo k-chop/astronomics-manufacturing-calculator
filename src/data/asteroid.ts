@@ -49,9 +49,7 @@ export const genericAsteroidNames = {
   };
 };
 
-export type AsteroidName =
-  | keyof typeof asteroids
-  | keyof typeof genericAsteroidNames;
+export type AsteroidName = keyof typeof asteroids | keyof typeof genericAsteroidNames;
 
 export function getAsteroidInfo(
   asteroidId: AsteroidName,
@@ -66,9 +64,7 @@ export function getAsteroidInfo(
     };
   } else {
     return {
-      name: genericAsteroidNames[
-        asteroidId as keyof typeof genericAsteroidNames
-      ][locale],
+      name: genericAsteroidNames[asteroidId as keyof typeof genericAsteroidNames][locale],
     };
   }
 }

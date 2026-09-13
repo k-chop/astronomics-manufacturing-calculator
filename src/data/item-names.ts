@@ -112,18 +112,12 @@ export function getItemName(itemId: string, locale: string = "en"): string {
 }
 
 // 検索用：IDと表示名の両方でマッチング
-export function searchItems(
-  query: string,
-  locale: string = "en",
-): Array<{ id: string; name: string }> {
+export function searchItems(query: string, locale: string = "en"): Array<{ id: string; name: string }> {
   const lowerQuery = query.toLowerCase();
   return Object.entries(itemNames)
     .filter(([id, names]) => {
       const name = names[locale as keyof LocalizedNames] || names.en;
-      return (
-        id.toLowerCase().includes(lowerQuery) ||
-        name.toLowerCase().includes(lowerQuery)
-      );
+      return id.toLowerCase().includes(lowerQuery) || name.toLowerCase().includes(lowerQuery);
     })
     .map(([id, names]) => ({
       id,

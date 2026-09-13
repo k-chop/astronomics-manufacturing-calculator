@@ -8,20 +8,13 @@ type ItemSearchProps = {
   inputId?: string;
 };
 
-export function ItemSearch({
-  onSelect,
-  locale = "en",
-  inputId,
-}: ItemSearchProps) {
+export function ItemSearch({ onSelect, locale = "en", inputId }: ItemSearchProps) {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const results = useMemo(
-    () => (query.trim() ? searchItems(query, locale) : []),
-    [query, locale],
-  );
+  const results = useMemo(() => (query.trim() ? searchItems(query, locale) : []), [query, locale]);
 
   const handleQueryChange = (newQuery: string) => {
     setQuery(newQuery);
@@ -46,9 +39,7 @@ export function ItemSearch({
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex(
-          (prev) => (prev - 1 + results.length) % results.length,
-        );
+        setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
         break;
       case "Enter":
         e.preventDefault();
@@ -84,17 +75,11 @@ export function ItemSearch({
               key={result.id}
               onClick={() => handleSelect(result.id)}
               className={`w-full text-left px-4 py-2 cursor-pointer ${
-                index === selectedIndex
-                  ? "bg-blue-500 text-white"
-                  : "hover:bg-gray-100"
+                index === selectedIndex ? "bg-blue-500 text-white" : "hover:bg-gray-100"
               }`}
             >
               <div className="font-medium">{result.name}</div>
-              <div
-                className={`text-sm ${
-                  index === selectedIndex ? "text-blue-100" : "text-gray-500"
-                }`}
-              >
+              <div className={`text-sm ${index === selectedIndex ? "text-blue-100" : "text-gray-500"}`}>
                 {result.id}
               </div>
             </button>

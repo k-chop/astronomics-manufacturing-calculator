@@ -1,9 +1,5 @@
 import type { ItemStack } from "../data/recipes";
-import type {
-  MaterialProgress,
-  ProductionPlan,
-  ProductionPlanItem,
-} from "../types/production-plan";
+import type { MaterialProgress, ProductionPlan, ProductionPlanItem } from "../types/production-plan";
 import type { CalculationResult } from "./calculator";
 
 /**
@@ -52,10 +48,7 @@ export function addItemToPlan(
 /**
  * 生産計画からアイテムを削除
  */
-export function removeItemFromPlan(
-  plan: ProductionPlan,
-  itemId: string,
-): ProductionPlan {
+export function removeItemFromPlan(plan: ProductionPlan, itemId: string): ProductionPlan {
   return {
     items: plan.items.filter((item) => item.id !== itemId),
   };
@@ -64,14 +57,9 @@ export function removeItemFromPlan(
 /**
  * アイテムの完了状態を切り替え
  */
-export function toggleItemCompletion(
-  plan: ProductionPlan,
-  itemId: string,
-): ProductionPlan {
+export function toggleItemCompletion(plan: ProductionPlan, itemId: string): ProductionPlan {
   return {
-    items: plan.items.map((item) =>
-      item.id === itemId ? { ...item, completed: !item.completed } : item,
-    ),
+    items: plan.items.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)),
   };
 }
 
@@ -94,10 +82,7 @@ export function updateMaterialProgress(
           ...item.materialProgress,
           [materialId]: {
             ...item.materialProgress[materialId],
-            collected: Math.max(
-              0,
-              Math.min(collected, item.materialProgress[materialId].required),
-            ),
+            collected: Math.max(0, Math.min(collected, item.materialProgress[materialId].required)),
           },
         },
       };
