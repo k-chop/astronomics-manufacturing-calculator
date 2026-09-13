@@ -20,6 +20,7 @@ import {
   isMaterialsCovered,
   isReadyToFinish,
   recordStepRuns,
+  removeItemFromPlan,
   setInventory,
   toggleItemCompletion,
 } from "./production-plan-utils";
@@ -392,11 +393,73 @@ describe("aggregateRequired / getInventoryRows", () => {
     const id = plan.items[0].id;
     plan = setInventory(plan, "quantum-data-drives", 85);
     plan = setInventory(plan, "oxygen-gas", 650);
-    expect(getInventoryRows(plan)).toEqual([{ item: "oxygen-gas", required: 650, have: 650, missing: 0 }]);
+    expect(getInventoryRows(plan)).toEqual([
+      { item: "oxygen-gas", required: 650, have: 650, missing: 0 },
+      { item: "quantum-data-drives", required: 20, have: 85, missing: 0 },
+    ]);
 
     plan = toggleItemCompletion(plan, id);
     expect(plan.inventory).toEqual({ "quantum-data-drives": 65 });
     expect(getInventoryRows(plan)).toEqual([]);
+  });
+});
+
+describe("getInventoryRows と中間材料", () => {
+  it("残りステップで作る中間材料も行に出て、作れる分は missing に数えない", () => {
+    // Shuttle Equipment Delivery Lv1: Fiber Optic Strands 400 ← Gem Dust 400 ← Any Gem 400
+    let plan = addUpgradeToPlan(emptyProductionPlan, "shuttle-equipment-delivery", 1);
+    const id = plan.items[0].id;
+    expect(getInventoryRows(plan)).toEqual([
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
+      { item: "gem-dust", required: 400, have: 0, missing: 0 },
+      { item: "any-gem", required: 400, have: 0, missing: 400 },
+    ]);
+
+    // Any Gem を用意して Gem Dust を全部作る: Gem Dust の行が残り、次のクラフトがそこに出る
+    plan = setInventory(plan, "any-gem", 400);
+    plan = recordStepRuns(plan, id, 1, 40);
+    expect(plan.inventory).toEqual({ "gem-dust": 400 });
+    expect(getInventoryRows(plan)).toEqual([
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
+      { item: "gem-dust", required: 400, have: 400, missing: 0 },
+    ]);
+    const crafts = getReadyCraftsByInput(plan).get("gem-dust");
+    expect(crafts?.map((craft) => [craft.recipe.outputs[0].item, craft.runs])).toEqual([["fiber-optic-strands", 8]]);
+  });
+
+  it("中間材料が途中まで在庫にある場合は残りの原材料だけが不足になる", () => {
+    const plan = addUpgradeToPlan(
+      { ...emptyProductionPlan, inventory: { "gem-dust": 150 } },
+      "shuttle-equipment-delivery",
+      1,
+    );
+    // gem-dust あと 250 → any-gem 250
+    expect(getInventoryRows(plan)).toEqual([
+      { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
+      { item: "gem-dust", required: 400, have: 150, missing: 0 },
+      { item: "any-gem", required: 250, have: 0, missing: 250 },
+    ]);
+  });
+});
+
+describe("removeItemFromPlan", () => {
+  it("エントリが残っていれば在庫は保持し、1 つもなくなったら在庫を空にする", () => {
+    let plan = addUpgradeToPlan(
+      { ...emptyProductionPlan, inventory: { iron: 300, "gem-dust": 400 } },
+      "shuttle-forge",
+      1,
+    );
+    plan = addUpgradeToPlan(plan, "shuttle-equipment", 1);
+    const [forge, equipment] = plan.items;
+
+    plan = removeItemFromPlan(plan, forge.id);
+    expect(plan.items.map((entry) => entry.id)).toEqual([equipment.id]);
+    expect(plan.inventory).toEqual({ iron: 300, "gem-dust": 400 });
+
+    plan = toggleItemCompletion(plan, equipment.id);
+    plan = removeItemFromPlan(plan, equipment.id);
+    expect(plan.items).toEqual([]);
+    expect(plan.inventory).toEqual({});
   });
 });
 

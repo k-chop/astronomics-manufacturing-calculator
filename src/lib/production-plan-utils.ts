@@ -95,9 +95,14 @@ export type StepStatus = {
   craftableNow: number; // 今の在庫で実行でき、かつ意味がある回数
 };
 
+export type DemandStatus = MaterialStatus & {
+  produced: number; // このエントリの残りステップで作る予定の数
+};
+
 export type EntryAnalysis = {
   steps: StepStatus[];
-  materials: MaterialStatus[];
+  demands: DemandStatus[]; // 要求されるものすべて（中間材料を含む）
+  materials: MaterialStatus[]; // 在庫から用意する必要があるもの（原材料と、作っても足りないもの）
 };
 
 /**
@@ -116,7 +121,7 @@ export function getCraftableRuns(recipe: CalculationRecipe, done: number, invent
  * ステップは「親 → 子」の順に並んでいるので、その順に処理する:
  * - 親ステップの残り回数から入力の需要を積み、子ステップは「需要 − 在庫 − 既に積んだ生産」を埋めるのに必要な回数だけ実行する
  * - 在庫に中間材料があれば子ステップは不要（usefulRuns = 0）になり、その原材料も要求しない
- * - 材料一覧には、このエントリ内に作るステップがないもの（原材料）と、作っても足りないものだけを出す
+ * - demands には要求されるものすべてを出し、materials にはこのエントリ内に作るステップがないもの（原材料）と、作っても足りないものだけを出す
  */
 export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): EntryAnalysis {
   const recipes = getEntrySteps(entry);
@@ -155,17 +160,19 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
     };
   });
 
-  const materials: MaterialStatus[] = [];
+  const demands: DemandStatus[] = [];
   for (const [item, need] of demand) {
     if (need === 0) continue;
     const have = inventory[item] ?? 0;
-    const shortage = Math.max(0, need - have - (produced.get(item) ?? 0));
-    if (!producedItems.has(item) || shortage > 0) {
-      materials.push({ item, need, have, shortage });
-    }
+    const producedAmount = produced.get(item) ?? 0;
+    const shortage = Math.max(0, need - have - producedAmount);
+    demands.push({ item, need, have, shortage, produced: producedAmount });
   }
+  const materials = demands
+    .filter(({ item, shortage }) => !producedItems.has(item) || shortage > 0)
+    .map(({ item, need, have, shortage }) => ({ item, need, have, shortage }));
 
-  return { steps, materials };
+  return { steps, demands, materials };
 }
 
 /**
@@ -309,8 +316,13 @@ export function addUpgradeToPlan(plan: ProductionPlan, upgradeId: string, level:
 /**
  * 生産計画からエントリを削除
  */
+/**
+ * エントリを削除する。エントリが 1 つもなくなったら在庫も空にする
+ * （ゲーム内と完全には同期できないので、残った在庫を次のプランに引きずらない）
+ */
 export function removeItemFromPlan(plan: ProductionPlan, entryId: string): ProductionPlan {
-  return { ...plan, items: plan.items.filter((item) => item.id !== entryId) };
+  const items = plan.items.filter((item) => item.id !== entryId);
+  return { items, inventory: items.length === 0 ? {} : plan.inventory };
 }
 
 /**
@@ -355,14 +367,23 @@ export type InventoryRow = {
 };
 
 /**
- * 在庫パネルの行: 未完了エントリが必要とする材料だけ（必要数の降順）
- * どのプランも使わない材料は在庫に残っていても表示しない
+ * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）を必要数の降順で
+ * missing は各プランの残りステップで作れる分を差し引いた不足。どのプランも使わない材料は在庫に残っていても表示しない
  */
 export function getInventoryRows(plan: ProductionPlan): InventoryRow[] {
-  return aggregateRequired(plan)
-    .map(({ item, amount }) => {
+  const required = new Map<string, number>();
+  const produced = new Map<string, number>();
+  for (const entry of plan.items) {
+    if (entry.completed) continue;
+    for (const demandStatus of analyzeEntry(entry, plan.inventory).demands) {
+      addAmount(required, demandStatus.item, demandStatus.need);
+      addAmount(produced, demandStatus.item, demandStatus.produced);
+    }
+  }
+  return [...required]
+    .map(([item, amount]) => {
       const have = plan.inventory[item] ?? 0;
-      return { item, required: amount, have, missing: Math.max(0, amount - have) };
+      return { item, required: amount, have, missing: Math.max(0, amount - have - (produced.get(item) ?? 0)) };
     })
     .toSorted((a, b) => b.required - a.required);
 }

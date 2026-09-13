@@ -30,7 +30,8 @@ export function InventoryPanel({
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-2 border-blue-200">
       <h2 className="text-xl font-bold mb-1 text-gray-900">Materials &amp; Inventory</h2>
       <p className="text-sm text-gray-600 mb-4">
-        Enter what you have. Required is the total for all incomplete entries in your plan.
+        Enter what you have. Required is the total for all incomplete entries in your plan, including intermediates your
+        remaining steps will craft.
       </p>
       <table className="w-full table-fixed text-sm">
         <colgroup>
@@ -99,12 +100,16 @@ export function InventoryPanel({
                     className="w-full px-1.5 py-1 text-sm text-right font-mono border border-gray-300 rounded bg-white"
                   />
                 </td>
-                <td
-                  className={`py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap ${
-                    row.missing > 0 ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  {row.missing > 0 ? formatNumber(row.missing) : "✓"}
+                <td className="py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
+                  {row.missing > 0 ? (
+                    <span className="text-red-600">{formatNumber(row.missing)}</span>
+                  ) : row.have >= row.required ? (
+                    <span className="text-green-600">✓</span>
+                  ) : (
+                    <span className="text-gray-400 font-normal" title="Covered by crafting from what you have">
+                      craft
+                    </span>
+                  )}
                 </td>
               </tr>
             );
