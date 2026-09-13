@@ -2,9 +2,9 @@ import { useState } from "react";
 
 import { CatalogTree } from "./components/CatalogTree";
 import { GitHubIcon } from "./components/GitHubIcon";
+import { InventoryPanel } from "./components/InventoryPanel";
 import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
-import { MaterialsSummary } from "./components/MaterialsSummary";
 import { ProductionPlanList } from "./components/ProductionPlanList";
 import { UpgradeResult } from "./components/UpgradeResult";
 import type { CalculationResult } from "./lib/calculator";
@@ -14,10 +14,12 @@ import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-st
 import {
   addItemToPlan,
   addUpgradeToPlan,
-  aggregateMaterials,
+  getInventoryRows,
+  getReadyCraftsByInput,
+  recordStepRuns,
   removeItemFromPlan,
+  setInventory,
   toggleItemCompletion,
-  updateMaterialProgress,
 } from "./lib/production-plan-utils";
 import { getMinimumAmount } from "./lib/recipe-utils";
 import type { ProductionPlan } from "./types/production-plan";
@@ -88,8 +90,12 @@ export const App = () => {
     updateProductionPlan(toggleItemCompletion(productionPlan, entryId));
   };
 
-  const handleUpdateMaterialProgress = (entryId: string, materialId: string, collected: number) => {
-    updateProductionPlan(updateMaterialProgress(productionPlan, entryId, materialId, collected));
+  const handleUpdateInventory = (itemId: string, have: number) => {
+    updateProductionPlan(setInventory(productionPlan, itemId, have));
+  };
+
+  const handleRecordStepRuns = (entryId: string, stepIndex: number, delta: number) => {
+    updateProductionPlan(recordStepRuns(productionPlan, entryId, stepIndex, delta));
   };
 
   return (
@@ -160,15 +166,20 @@ export const App = () => {
 
           {/* Right Column: Production Plan */}
           <div className="space-y-6">
-            {/* Total Materials Summary */}
-            {productionPlan.items.length > 0 && <MaterialsSummary materials={aggregateMaterials(productionPlan)} />}
+            {/* Materials & Inventory */}
+            <InventoryPanel
+              rows={getInventoryRows(productionPlan)}
+              craftsByInput={getReadyCraftsByInput(productionPlan)}
+              onUpdateInventory={handleUpdateInventory}
+              onRecordStepRuns={handleRecordStepRuns}
+            />
 
             {/* Production Plan List */}
             <ProductionPlanList
               plan={productionPlan}
               onRemoveItem={handleRemoveFromPlan}
               onToggleCompletion={handleToggleCompletion}
-              onUpdateMaterialProgress={handleUpdateMaterialProgress}
+              onRecordStepRuns={handleRecordStepRuns}
             />
           </div>
         </div>

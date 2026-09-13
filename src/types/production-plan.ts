@@ -1,19 +1,17 @@
 import type { CalculationResult } from "../lib/calculator";
 
 /**
- * 原材料の収集進捗
+ * 今持っている材料（プラン横断の在庫）
+ * 原材料だけでなく、途中まで作った中間材料も含む
  */
-export type MaterialProgress = {
-  [itemId: string]: {
-    required: number; // 必要な総数
-    collected: number; // 収集済みの数
-  };
+export type Inventory = {
+  [itemId: string]: number;
 };
 
 type ProductionPlanEntryBase = {
   id: string; // ユニークID
   completed: boolean; // 完了フラグ
-  materialProgress: MaterialProgress; // 原材料の収集進捗
+  stepProgress: number[]; // getEntrySteps(entry) の順で、各製造ステップの実行済み回数
 };
 
 /**
@@ -54,4 +52,5 @@ export type ProductionPlanEntry = ProductionPlanItem | ProductionPlanUpgrade;
  */
 export type ProductionPlan = {
   items: ProductionPlanEntry[];
+  inventory: Inventory;
 };

@@ -1,19 +1,56 @@
-import type { ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
+import type { Inventory, ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
+import { emptyProductionPlan, getEntrySteps } from "./production-plan-utils";
 
 const STORAGE_KEY = "astronomics-production-plan";
 
 /**
+ * 旧形式で保存されていた、プランごとの原材料収集進捗
+ */
+type LegacyMaterialProgress = {
+  [itemId: string]: { required: number; collected: number };
+};
+
+type StoredEntry = Partial<ProductionPlanEntry> & {
+  kind?: ProductionPlanEntry["kind"];
+  materialProgress?: LegacyMaterialProgress;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/**
  * 保存済みデータを現在の形式に変換する
- * kind が付く前に保存されたエントリはすべてアイテムなので kind: "item" を付与する
+ * - kind がないエントリはアイテム（kind: "item"）
+ * - inventory がなければ、各エントリの materialProgress.collected を合算して在庫にする
+ * - stepProgress がなければ 0 埋めで初期化し、materialProgress は捨てる
  */
 export function migrateProductionPlan(raw: unknown): ProductionPlan {
-  if (typeof raw !== "object" || raw === null || !("items" in raw) || !Array.isArray(raw.items)) {
-    return { items: [] };
+  if (!isRecord(raw) || !Array.isArray(raw.items)) {
+    return emptyProductionPlan;
   }
-  const items = raw.items.map((entry: ProductionPlanEntry | Omit<ProductionPlanEntry, "kind">) =>
-    "kind" in entry ? entry : ({ kind: "item", ...entry } as ProductionPlanEntry),
-  );
-  return { items };
+
+  const inventory: Inventory = isRecord(raw.inventory) ? { ...(raw.inventory as Inventory) } : {};
+  const hasInventory = isRecord(raw.inventory);
+
+  const items = raw.items.map((stored: StoredEntry) => {
+    const { materialProgress, ...rest } = stored;
+    const withKind = { kind: "item", ...rest } as ProductionPlanEntry;
+
+    if (!hasInventory && materialProgress) {
+      for (const [item, progress] of Object.entries(materialProgress)) {
+        if (progress.collected > 0) inventory[item] = (inventory[item] ?? 0) + progress.collected;
+      }
+    }
+
+    const stepProgress = Array.isArray(withKind.stepProgress)
+      ? withKind.stepProgress
+      : getEntrySteps({ ...withKind, stepProgress: [] }).map(() => 0);
+
+    return { ...withKind, stepProgress };
+  });
+
+  return { items, inventory };
 }
 
 /**
@@ -23,12 +60,12 @@ export function loadProductionPlan(): ProductionPlan {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      return { items: [] };
+      return emptyProductionPlan;
     }
     return migrateProductionPlan(JSON.parse(stored));
   } catch (error) {
     console.error("Failed to load production plan:", error);
-    return { items: [] };
+    return emptyProductionPlan;
   }
 }
 
