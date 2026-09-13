@@ -1,5 +1,5 @@
 import { getItemName, type Locale } from "../data/item-names";
-import type { CalculationResult } from "../lib/calculator";
+import { type CalculationResult, getRecipeKey, getResultKey } from "../lib/calculator";
 import { formatDuration } from "../lib/format-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
@@ -91,10 +91,7 @@ export function ManufacturingResult({
       </div>
 
       {results.map((result, patternIndex) => (
-        <div
-          key={`pattern-${patternIndex}-${result.totalDuration}`}
-          className="border border-gray-300 rounded-lg p-4 bg-white shadow"
-        >
+        <div key={getResultKey(result)} className="border border-gray-300 rounded-lg p-4 bg-white shadow">
           <div className="mb-3 pb-3 border-b border-gray-200">
             <div className="text-sm text-gray-600">Pattern {patternIndex + 1}</div>
             <div className="text-xl font-bold text-blue-600">Total Time: {formatDuration(result.totalDuration)}</div>
@@ -117,11 +114,8 @@ export function ManufacturingResult({
           <div>
             <div className="font-semibold mb-2">Manufacturing Steps:</div>
             <div className="space-y-3">
-              {result.recipes.map((recipe, recipeIdx) => (
-                <div
-                  key={`recipe-${recipeIdx}-${recipe.machine}-${recipe.outputs[0].item}`}
-                  className="border border-gray-200 rounded p-3 bg-gray-50"
-                >
+              {result.recipes.map((recipe) => (
+                <div key={getRecipeKey(recipe)} className="border border-gray-200 rounded p-3 bg-gray-50">
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium text-blue-700">
                       {recipe.machine.charAt(0).toUpperCase() + recipe.machine.slice(1)}

@@ -16,6 +16,24 @@ export type CalculationResult = {
   recipes: CalculationRecipe[];
 };
 
+function formatItemStacks(stacks: ItemStack[]): string {
+  return stacks.map((stack) => `${stack.item}x${stack.amount}`).join(",");
+}
+
+/**
+ * レシピを一意に識別する文字列を返す（React の key 用）
+ */
+export function getRecipeKey(recipe: CalculationRecipe): string {
+  return `${recipe.machine}:${formatItemStacks(recipe.inputs)}>${formatItemStacks(recipe.outputs)}x${recipe.count}`;
+}
+
+/**
+ * 計算結果（製造パターン）を一意に識別する文字列を返す（React の key 用）
+ */
+export function getResultKey(result: CalculationResult): string {
+  return `${result.recipes.map(getRecipeKey).join("|")}#${formatItemStacks(result.totalItems)}`;
+}
+
 function mergeItemStacks(stacks: ItemStack[]): ItemStack[] {
   const map = new Map<string, number>();
   for (const stack of stacks) {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateManufacturing } from "./calculator";
+import { recipes } from "../data/recipes";
+import { calculateManufacturing, getRecipeKey, getResultKey } from "./calculator";
+import { getMinimumAmount } from "./recipe-utils";
 
 describe("calculateManufacturing", () => {
   it("存在しないレシピの場合nullを返す", () => {
@@ -315,5 +317,22 @@ describe("calculateManufacturing", () => {
         ],
       },
     ]);
+  });
+});
+
+describe("getResultKey / getRecipeKey", () => {
+  it("全アイテムの計算結果でパターンとレシピのキーが一意になる", () => {
+    for (const itemId of Object.keys(recipes)) {
+      const results = calculateManufacturing(itemId, getMinimumAmount(itemId));
+      if (!results) continue;
+
+      const resultKeys = results.map(getResultKey);
+      expect(new Set(resultKeys).size).toBe(resultKeys.length);
+
+      for (const result of results) {
+        const recipeKeys = result.recipes.map(getRecipeKey);
+        expect(new Set(recipeKeys).size).toBe(recipeKeys.length);
+      }
+    }
   });
 });
