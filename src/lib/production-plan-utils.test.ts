@@ -6,14 +6,11 @@ import { migrateProductionPlan } from "./production-plan-storage";
 import {
   addItemToPlan,
   addUpgradeToPlan,
-  aggregateRequired,
   analyzeEntry,
   emptyProductionPlan,
   getCraftableRuns,
-  getEntryMaterials,
   getEntrySteps,
   getInventoryRows,
-  getMaterialStatus,
   getReadyCrafts,
   getReadyCraftsByInput,
   getUpgradeRequirementMaterials,
@@ -57,7 +54,7 @@ describe("addItemToPlan", () => {
     if (entry.kind !== "item") throw new Error("item エントリではない");
     expect(entry.selectedPatternIndex).toBe(0);
     expect(entry.stepProgress).toEqual([0]);
-    expect(getEntryMaterials(entry)).toEqual([{ item: "biomass", amount: 50 }]);
+    expect(entry.calculationResults[entry.selectedPatternIndex].totalItems).toEqual([{ item: "biomass", amount: 50 }]);
   });
 
   it("指定したパターンで追加され、原材料もそのパターンのものになる", () => {
@@ -67,7 +64,7 @@ describe("addItemToPlan", () => {
     if (entry.kind !== "item") throw new Error("item エントリではない");
     expect(entry.selectedPatternIndex).toBe(1);
     expect(entry.stepProgress).toEqual([0, 0]);
-    expect(getEntryMaterials(entry)).toEqual([{ item: "water", amount: 500 }]);
+    expect(entry.calculationResults[entry.selectedPatternIndex].totalItems).toEqual([{ item: "water", amount: 500 }]);
   });
 
   it("範囲外のパターン index は 0 に丸められる", () => {
@@ -90,7 +87,7 @@ describe("addUpgradeToPlan", () => {
 
     expect(entry.kind).toBe("upgrade");
     expect(entry.stepProgress).toEqual([]);
-    expect(getMaterialStatus(entry, {})).toEqual([
+    expect(analyzeEntry(entry, {}).materials).toEqual([
       { item: "biomass", need: 300, have: 0, shortage: 300 },
       { item: "carbon", need: 500, have: 0, shortage: 500 },
     ]);
@@ -101,7 +98,7 @@ describe("addUpgradeToPlan", () => {
     const entry = plan.items[0];
 
     // Fiber Optic Strands 300 → Gem Dust 300 → Any Gem 300
-    expect(getMaterialStatus(entry, {})).toEqual([
+    expect(analyzeEntry(entry, {}).materials).toEqual([
       { item: "chromite", need: 400, have: 0, shortage: 400 },
       { item: "any-gem", need: 300, have: 0, shortage: 300 },
     ]);
@@ -114,7 +111,7 @@ describe("addUpgradeToPlan", () => {
     const plan = addUpgradeToPlan(emptyProductionPlan, "shuttle-storage", 1);
     const entry = plan.items[0];
 
-    expect(getMaterialStatus(entry, {})).toEqual([{ item: "salt", need: 250, have: 0, shortage: 250 }]);
+    expect(analyzeEntry(entry, {}).materials).toEqual([{ item: "salt", need: 250, have: 0, shortage: 250 }]);
     if (entry.kind !== "upgrade") throw new Error("upgrade エントリではない");
     expect(entry.requirements[0].calculationResults).toBeNull();
   });
@@ -289,14 +286,14 @@ describe("getCraftableRuns", () => {
   });
 });
 
-describe("getMaterialStatus", () => {
-  it("在庫との差分を返す", () => {
+describe("isMaterialsCovered", () => {
+  it("在庫との差分から充足を判定する", () => {
     const plan = graphitePlan({ biomass: 120 });
-    const statuses = getMaterialStatus(plan.items[0], plan.inventory);
+    const { materials } = analyzeEntry(plan.items[0], plan.inventory);
 
-    expect(statuses).toEqual([{ item: "biomass", need: 500, have: 120, shortage: 380 }]);
-    expect(isMaterialsCovered(statuses)).toBe(false);
-    expect(isMaterialsCovered(getMaterialStatus(plan.items[0], { biomass: 600 }))).toBe(true);
+    expect(materials).toEqual([{ item: "biomass", need: 500, have: 120, shortage: 380 }]);
+    expect(isMaterialsCovered(materials)).toBe(false);
+    expect(isMaterialsCovered(analyzeEntry(plan.items[0], { biomass: 600 }).materials)).toBe(true);
   });
 });
 
@@ -362,7 +359,7 @@ describe("setInventory", () => {
   });
 });
 
-describe("aggregateRequired / getInventoryRows", () => {
+describe("getInventoryRows", () => {
   it("複数エントリの必要数を合算し、完了済みは除き、どのプランも使わない在庫は行に出ない", () => {
     // Copper Wire 40 → copper 30, iron 10 / Manufacturing Lv1 → cobalt 800, iron 1000
     let plan = addItemToPlan(
@@ -375,11 +372,6 @@ describe("aggregateRequired / getInventoryRows", () => {
     plan = addUpgradeToPlan(plan, "fuel-capacity", 1);
     plan = toggleItemCompletion(plan, plan.items[2].id);
 
-    expect(aggregateRequired(plan)).toEqual([
-      { item: "copper", amount: 30 },
-      { item: "iron", amount: 1010 },
-      { item: "cobalt", amount: 800 },
-    ]);
     expect(getInventoryRows(plan)).toEqual([
       { item: "iron", required: 1010, have: 100, missing: 910 },
       { item: "cobalt", required: 800, have: 0, missing: 800 },

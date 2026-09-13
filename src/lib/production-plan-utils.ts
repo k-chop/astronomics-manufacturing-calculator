@@ -22,18 +22,6 @@ export function generateId(): string {
 export const emptyProductionPlan: ProductionPlan = { items: [], inventory: {} };
 
 /**
- * エントリが必要とする原材料の一覧を返す（進捗を考慮しない、追加時点の全量）
- * item: 選択中パターンの原材料
- * upgrade: 原材料の要求 + レシピ持ち要求を最速パターンで展開した原材料、を合算したもの
- */
-export function getEntryMaterials(entry: ProductionPlanEntry): ItemStack[] {
-  if (entry.kind === "item") {
-    return entry.calculationResults[entry.selectedPatternIndex].totalItems;
-  }
-  return getUpgradeRequirementMaterials(entry.requirements);
-}
-
-/**
  * アップグレードの要求資源を原材料まで展開して合算する
  */
 export function getUpgradeRequirementMaterials(requirements: UpgradeRequirement[]): ItemStack[] {
@@ -61,6 +49,13 @@ export function resolveUpgradeRequirements(requirements: ItemStack[]): UpgradeRe
 }
 
 /**
+ * アップグレードの製造ステップ一覧: 各要求資源の最速パターンのレシピを連結したもの
+ */
+function getUpgradeSteps(requirements: UpgradeRequirement[]): CalculationRecipe[] {
+  return requirements.flatMap((requirement) => requirement.calculationResults?.[0].recipes ?? []);
+}
+
+/**
  * エントリの製造ステップ一覧（stepProgress と同じ順）
  * item: 選択中パターンのレシピ
  * upgrade: 各要求資源の最速パターンのレシピを連結したもの
@@ -69,7 +64,7 @@ export function getEntrySteps(entry: ProductionPlanEntry): CalculationRecipe[] {
   if (entry.kind === "item") {
     return entry.calculationResults[entry.selectedPatternIndex].recipes;
   }
-  return entry.requirements.flatMap((requirement) => requirement.calculationResults?.[0].recipes ?? []);
+  return getUpgradeSteps(entry.requirements);
 }
 
 function getStepDone(entry: ProductionPlanEntry, stepIndex: number): number {
@@ -173,13 +168,6 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
     .map(({ item, need, have, shortage }) => ({ item, need, have, shortage }));
 
   return { steps, demands, materials };
-}
-
-/**
- * エントリの残り必要材料を在庫と（他プランとは独立に）比較する
- */
-export function getMaterialStatus(entry: ProductionPlanEntry, inventory: Inventory): MaterialStatus[] {
-  return analyzeEntry(entry, inventory).materials;
 }
 
 export function isMaterialsCovered(statuses: MaterialStatus[]): boolean {
@@ -299,23 +287,20 @@ export function addUpgradeToPlan(plan: ProductionPlan, upgradeId: string, level:
   const upgradeLevel = getUpgradeLevel(upgradeId, level);
   if (!upgradeLevel) return plan;
 
+  const requirements = resolveUpgradeRequirements(upgradeLevel.requirements);
   const newEntry: ProductionPlanUpgrade = {
     kind: "upgrade",
     id: generateId(),
     upgradeId,
     level,
     completed: false,
-    requirements: resolveUpgradeRequirements(upgradeLevel.requirements),
-    stepProgress: [],
+    requirements,
+    stepProgress: getUpgradeSteps(requirements).map(() => 0),
   };
-  newEntry.stepProgress = getEntrySteps(newEntry).map(() => 0);
 
   return { ...plan, items: [...plan.items, newEntry] };
 }
 
-/**
- * 生産計画からエントリを削除
- */
 /**
  * エントリを削除する。エントリが 1 つもなくなったら在庫も空にする
  * （ゲーム内と完全には同期できないので、残った在庫を次のプランに引きずらない）
@@ -346,17 +331,6 @@ export function toggleItemCompletion(plan: ProductionPlan, entryId: string): Pro
     inventory,
     items: plan.items.map((item) => (item.id === entryId ? { ...item, completed } : item)),
   };
-}
-
-/**
- * 未完了エントリの残り必要材料を合算する
- */
-export function aggregateRequired(plan: ProductionPlan): ItemStack[] {
-  return mergeItemStacks(
-    plan.items
-      .filter((entry) => !entry.completed)
-      .flatMap((entry) => getMaterialStatus(entry, plan.inventory).map(({ item, need }) => ({ item, amount: need }))),
-  );
 }
 
 export type InventoryRow = {
