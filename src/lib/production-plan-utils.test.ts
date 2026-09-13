@@ -10,12 +10,9 @@ import {
   emptyProductionPlan,
   getCraftableRuns,
   getEntrySteps,
-  getInventoryRows,
-  getReadyCrafts,
-  getReadyCraftsByInput,
+  analyzePlan,
   getUpgradeRequirementMaterials,
   isMaterialsCovered,
-  isReadyToFinish,
   recordStepRuns,
   removeItemFromPlan,
   setInventory,
@@ -297,21 +294,21 @@ describe("isMaterialsCovered", () => {
   });
 });
 
-describe("isReadyToFinish", () => {
+describe("analyzeEntry の readyToFinish", () => {
   it("upgrade は要求資源がすべて在庫にあれば ready", () => {
     const plan = addUpgradeToPlan(emptyProductionPlan, "fuel-capacity", 2);
     const entry = plan.items[0];
-    expect(isReadyToFinish(entry, { chromite: 400, "fiber-optic-strands": 299 })).toBe(false);
-    expect(isReadyToFinish(entry, { chromite: 400, "fiber-optic-strands": 300 })).toBe(true);
+    expect(analyzeEntry(entry, { chromite: 400, "fiber-optic-strands": 299 }).readyToFinish).toBe(false);
+    expect(analyzeEntry(entry, { chromite: 400, "fiber-optic-strands": 300 }).readyToFinish).toBe(true);
   });
 
   it("item は最終レシピの残りをすべて今の在庫で実行できれば ready", () => {
     const plan = graphitePlan();
     const entry = plan.items[0];
     // carbon 50 → graphite 10 を 2 回: carbon 100 で ready、biomass だけでは ready ではない
-    expect(isReadyToFinish(entry, { biomass: 500 })).toBe(false);
-    expect(isReadyToFinish(entry, { carbon: 50 })).toBe(false);
-    expect(isReadyToFinish(entry, { carbon: 100 })).toBe(true);
+    expect(analyzeEntry(entry, { biomass: 500 }).readyToFinish).toBe(false);
+    expect(analyzeEntry(entry, { carbon: 50 }).readyToFinish).toBe(false);
+    expect(analyzeEntry(entry, { carbon: 100 }).readyToFinish).toBe(true);
   });
 
   it("完了済みは ready ではない", () => {
@@ -321,7 +318,7 @@ describe("isReadyToFinish", () => {
       2,
     );
     plan = toggleItemCompletion(plan, plan.items[0].id);
-    expect(isReadyToFinish(plan.items[0], plan.inventory)).toBe(false);
+    expect(analyzeEntry(plan.items[0], plan.inventory).readyToFinish).toBe(false);
   });
 });
 
@@ -359,7 +356,7 @@ describe("setInventory", () => {
   });
 });
 
-describe("getInventoryRows", () => {
+describe("analyzePlan の rows", () => {
   it("複数エントリの必要数を合算し、完了済みは除き、どのプランも使わない在庫は行に出ない", () => {
     // Copper Wire 40 → copper 30, iron 10 / Manufacturing Lv1 → cobalt 800, iron 1000
     let plan = addItemToPlan(
@@ -372,7 +369,7 @@ describe("getInventoryRows", () => {
     plan = addUpgradeToPlan(plan, "fuel-capacity", 1);
     plan = toggleItemCompletion(plan, plan.items[2].id);
 
-    expect(getInventoryRows(plan)).toEqual([
+    expect(analyzePlan(plan).rows).toEqual([
       { item: "iron", required: 1010, have: 100, missing: 910 },
       { item: "cobalt", required: 800, have: 0, missing: 800 },
       { item: "copper", required: 30, have: 0, missing: 30 },
@@ -385,23 +382,23 @@ describe("getInventoryRows", () => {
     const id = plan.items[0].id;
     plan = setInventory(plan, "quantum-data-drives", 85);
     plan = setInventory(plan, "oxygen-gas", 650);
-    expect(getInventoryRows(plan)).toEqual([
+    expect(analyzePlan(plan).rows).toEqual([
       { item: "oxygen-gas", required: 650, have: 650, missing: 0 },
       { item: "quantum-data-drives", required: 20, have: 85, missing: 0 },
     ]);
 
     plan = toggleItemCompletion(plan, id);
     expect(plan.inventory).toEqual({ "quantum-data-drives": 65 });
-    expect(getInventoryRows(plan)).toEqual([]);
+    expect(analyzePlan(plan).rows).toEqual([]);
   });
 });
 
-describe("getInventoryRows と中間材料", () => {
+describe("analyzePlan の rows と中間材料", () => {
   it("残りステップで作る中間材料も行に出て、作れる分は missing に数えない", () => {
     // Shuttle Equipment Delivery Lv1: Fiber Optic Strands 400 ← Gem Dust 400 ← Any Gem 400
     let plan = addUpgradeToPlan(emptyProductionPlan, "shuttle-equipment-delivery", 1);
     const id = plan.items[0].id;
-    expect(getInventoryRows(plan)).toEqual([
+    expect(analyzePlan(plan).rows).toEqual([
       { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
       { item: "gem-dust", required: 400, have: 0, missing: 0 },
       { item: "any-gem", required: 400, have: 0, missing: 400 },
@@ -411,11 +408,11 @@ describe("getInventoryRows と中間材料", () => {
     plan = setInventory(plan, "any-gem", 400);
     plan = recordStepRuns(plan, id, 1, 40);
     expect(plan.inventory).toEqual({ "gem-dust": 400 });
-    expect(getInventoryRows(plan)).toEqual([
+    expect(analyzePlan(plan).rows).toEqual([
       { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
       { item: "gem-dust", required: 400, have: 400, missing: 0 },
     ]);
-    const crafts = getReadyCraftsByInput(plan).get("gem-dust");
+    const crafts = analyzePlan(plan).craftsByInput.get("gem-dust");
     expect(crafts?.map((craft) => [craft.recipe.outputs[0].item, craft.runs])).toEqual([["fiber-optic-strands", 8]]);
   });
 
@@ -426,7 +423,7 @@ describe("getInventoryRows と中間材料", () => {
       1,
     );
     // gem-dust あと 250 → any-gem 250
-    expect(getInventoryRows(plan)).toEqual([
+    expect(analyzePlan(plan).rows).toEqual([
       { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
       { item: "gem-dust", required: 400, have: 150, missing: 0 },
       { item: "any-gem", required: 250, have: 0, missing: 250 },
@@ -455,28 +452,28 @@ describe("removeItemFromPlan", () => {
   });
 });
 
-describe("getReadyCrafts", () => {
+describe("analyzePlan の crafts", () => {
   it("在庫で実行できるステップだけを返す", () => {
     let plan = graphitePlan({ biomass: 120 });
     const id = plan.items[0].id;
 
-    let crafts = getReadyCrafts(plan);
+    let crafts = analyzePlan(plan).crafts;
     expect(crafts.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[1, 2]]);
 
     plan = setInventory(plan, "carbon", 50);
-    crafts = getReadyCrafts(plan);
+    crafts = analyzePlan(plan).crafts;
     expect(crafts.map((craft) => [craft.stepIndex, craft.runs])).toEqual([
       [0, 1],
       [1, 2],
     ]);
 
     plan = toggleItemCompletion(plan, id);
-    expect(getReadyCrafts(plan)).toEqual([]);
+    expect(analyzePlan(plan).crafts).toEqual([]);
   });
 
   it("入力アイテムごとにまとめられる", () => {
     const plan = graphitePlan({ biomass: 120, carbon: 50 });
-    const byInput = getReadyCraftsByInput(plan);
+    const byInput = analyzePlan(plan).craftsByInput;
 
     expect(byInput.get("biomass")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[1, 2]]);
     expect(byInput.get("carbon")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[0, 1]]);

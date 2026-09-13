@@ -5,12 +5,13 @@ import { getUpgradeName } from "../data/upgrades";
 import { getRecipeKey } from "../lib/calculator";
 import { formatDuration, formatNumber } from "../lib/format-utils";
 import { formatRecipe } from "../lib/plan-format";
-import { analyzeEntry, isMaterialsCovered, isReadyToFinish } from "../lib/production-plan-utils";
+import { type EntryAnalysis, isMaterialsCovered, type PlanAnalysis } from "../lib/production-plan-utils";
 import type { Inventory, ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type ProductionPlanListProps = {
   plan: ProductionPlan;
+  analysis: PlanAnalysis;
   onRemoveItem: (entryId: string) => void;
   onToggleCompletion: (entryId: string) => void;
   onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
@@ -66,13 +67,13 @@ function EntryTitle({
 
 type EntryDetailsProps = {
   entry: ProductionPlanEntry;
-  inventory: Inventory;
+  analysis: EntryAnalysis;
   onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
   locale: Locale;
 };
 
-function EntryDetails({ entry, inventory, onRecordStepRuns, locale }: EntryDetailsProps) {
-  const { steps, materials: statuses } = analyzeEntry(entry, inventory);
+function EntryDetails({ entry, analysis, onRecordStepRuns, locale }: EntryDetailsProps) {
+  const { steps, materials: statuses } = analysis;
   // upgrade では複数の要求資源のレシピを連結しているので、同じレシピが並ぶ場合は出現回数で区別する
   const seenKeys = new Map<string, number>();
   const stepKeys = steps.map((step) => {
@@ -179,6 +180,7 @@ function EntryDetails({ entry, inventory, onRecordStepRuns, locale }: EntryDetai
 
 export function ProductionPlanList({
   plan,
+  analysis,
   onRemoveItem,
   onToggleCompletion,
   onRecordStepRuns,
@@ -212,12 +214,13 @@ export function ProductionPlanList({
       <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
       <div className="space-y-3">
         {plan.items.map((entry) => {
-          const { steps, materials: statuses } = analyzeEntry(entry, plan.inventory);
+          const entryAnalysis = analysis.entries.get(entry.id);
+          if (!entryAnalysis) return null;
+          const { steps, materials: statuses, readyToFinish: ready } = entryAnalysis;
           const shortCount = statuses.filter((status) => status.shortage > 0).length;
           const covered = isMaterialsCovered(statuses);
           const doneSteps = steps.filter((step) => step.remaining === 0).length;
           const isExpanded = expandedItems.has(entry.id);
-          const ready = isReadyToFinish(entry, plan.inventory);
           const cardClass = entry.completed
             ? "bg-gray-50 border-gray-300 opacity-60"
             : ready
@@ -290,7 +293,7 @@ export function ProductionPlanList({
               {isExpanded && (
                 <EntryDetails
                   entry={entry}
-                  inventory={plan.inventory}
+                  analysis={entryAnalysis}
                   onRecordStepRuns={onRecordStepRuns}
                   locale={locale}
                 />

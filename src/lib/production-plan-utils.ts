@@ -98,6 +98,7 @@ export type EntryAnalysis = {
   steps: StepStatus[];
   demands: DemandStatus[]; // 要求されるものすべて（中間材料を含む）
   materials: MaterialStatus[]; // 在庫から用意する必要があるもの（原材料と、作っても足りないもの）
+  readyToFinish: boolean; // 今の在庫だけで最終成果を得られる（あとは仕上げるだけ）
 };
 
 /**
@@ -117,6 +118,7 @@ export function getCraftableRuns(recipe: CalculationRecipe, done: number, invent
  * - 親ステップの残り回数から入力の需要を積み、子ステップは「需要 − 在庫 − 既に積んだ生産」を埋めるのに必要な回数だけ実行する
  * - 在庫に中間材料があれば子ステップは不要（usefulRuns = 0）になり、その原材料も要求しない
  * - demands には要求されるものすべてを出し、materials にはこのエントリ内に作るステップがないもの（原材料）と、作っても足りないものだけを出す
+ * - readyToFinish は upgrade なら要求資源がすべて在庫にあること、item なら最終レシピ（先頭ステップ）の残りをすべて今の在庫で実行できること
  */
 export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): EntryAnalysis {
   const recipes = getEntrySteps(entry);
@@ -167,25 +169,19 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
     .filter(({ item, shortage }) => !producedItems.has(item) || shortage > 0)
     .map(({ item, need, have, shortage }) => ({ item, need, have, shortage }));
 
-  return { steps, demands, materials };
+  return { steps, demands, materials, readyToFinish: isReadyToFinish(entry, inventory, steps[0]) };
 }
 
-export function isMaterialsCovered(statuses: MaterialStatus[]): boolean {
-  return statuses.every((status) => status.shortage === 0);
-}
-
-/**
- * 「あとは仕上げるだけ」か: 今の在庫だけでエントリの最終成果を得られる
- * - upgrade: 要求資源がすべて在庫にある（アップグレードを実行できる）
- * - item: 最終レシピ（先頭ステップ）の残り回数をすべて今の在庫で実行できる
- */
-export function isReadyToFinish(entry: ProductionPlanEntry, inventory: Inventory): boolean {
+function isReadyToFinish(entry: ProductionPlanEntry, inventory: Inventory, root: StepStatus | undefined): boolean {
   if (entry.completed) return false;
   if (entry.kind === "upgrade") {
     return entry.requirements.every((requirement) => (inventory[requirement.item] ?? 0) >= requirement.amount);
   }
-  const root = analyzeEntry(entry, inventory).steps[0];
   return root !== undefined && root.remaining > 0 && root.craftableNow === root.remaining;
+}
+
+export function isMaterialsCovered(statuses: MaterialStatus[]): boolean {
+  return statuses.every((status) => status.shortage === 0);
 }
 
 function adjustInventory(inventory: Inventory, item: string, delta: number): Inventory {
@@ -340,28 +336,6 @@ export type InventoryRow = {
   missing: number;
 };
 
-/**
- * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）を必要数の降順で
- * missing は各プランの残りステップで作れる分を差し引いた不足。どのプランも使わない材料は在庫に残っていても表示しない
- */
-export function getInventoryRows(plan: ProductionPlan): InventoryRow[] {
-  const required = new Map<string, number>();
-  const produced = new Map<string, number>();
-  for (const entry of plan.items) {
-    if (entry.completed) continue;
-    for (const demandStatus of analyzeEntry(entry, plan.inventory).demands) {
-      addAmount(required, demandStatus.item, demandStatus.need);
-      addAmount(produced, demandStatus.item, demandStatus.produced);
-    }
-  }
-  return [...required]
-    .map(([item, amount]) => {
-      const have = plan.inventory[item] ?? 0;
-      return { item, required: amount, have, missing: Math.max(0, amount - have - (produced.get(item) ?? 0)) };
-    })
-    .toSorted((a, b) => b.required - a.required);
-}
-
 export type ReadyCraft = {
   entry: ProductionPlanEntry;
   stepIndex: number;
@@ -369,12 +343,47 @@ export type ReadyCraft = {
   runs: number;
 };
 
+export type PlanAnalysis = {
+  entries: Map<string, EntryAnalysis>; // エントリ id → 分析結果（完了済みも含む）
+  rows: InventoryRow[]; // 在庫パネルの行
+  crafts: ReadyCraft[]; // 今の在庫で実行できる製造ステップ（未完了エントリのみ）
+  craftsByInput: Map<string, ReadyCraft[]>; // crafts を入力アイテムごとにまとめたもの（在庫パネルの表示用）
+};
+
+type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
+
 /**
- * 今の在庫で実行できる製造ステップを、入力アイテムごとにまとめる（在庫パネルの表示用）
+ * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）を必要数の降順で
+ * missing は各プランの残りステップで作れる分を差し引いた不足。どのプランも使わない材料は在庫に残っていても表示しない
  */
-export function getReadyCraftsByInput(plan: ProductionPlan): Map<string, ReadyCraft[]> {
+function buildInventoryRows(inventory: Inventory, pending: AnalyzedEntry[]): InventoryRow[] {
+  const required = new Map<string, number>();
+  const produced = new Map<string, number>();
+  for (const { analysis } of pending) {
+    for (const demandStatus of analysis.demands) {
+      addAmount(required, demandStatus.item, demandStatus.need);
+      addAmount(produced, demandStatus.item, demandStatus.produced);
+    }
+  }
+  return [...required]
+    .map(([item, amount]) => {
+      const have = inventory[item] ?? 0;
+      return { item, required: amount, have, missing: Math.max(0, amount - have - (produced.get(item) ?? 0)) };
+    })
+    .toSorted((a, b) => b.required - a.required);
+}
+
+function collectReadyCrafts(pending: AnalyzedEntry[]): ReadyCraft[] {
+  return pending.flatMap(({ entry, analysis }) =>
+    analysis.steps.flatMap((step, stepIndex) =>
+      step.craftableNow > 0 ? [{ entry, stepIndex, recipe: step.recipe, runs: step.craftableNow }] : [],
+    ),
+  );
+}
+
+function groupCraftsByInput(crafts: ReadyCraft[]): Map<string, ReadyCraft[]> {
   const byInput = new Map<string, ReadyCraft[]>();
-  for (const craft of getReadyCrafts(plan)) {
+  for (const craft of crafts) {
     for (const input of craft.recipe.inputs) {
       byInput.set(input.item, [...(byInput.get(input.item) ?? []), craft]);
     }
@@ -383,14 +392,16 @@ export function getReadyCraftsByInput(plan: ProductionPlan): Map<string, ReadyCr
 }
 
 /**
- * 今の在庫で実行できる製造ステップ（未完了エントリのみ）
+ * プラン全体を在庫に基づいて分析する（各エントリの分析を 1 回だけ行い、そこから在庫行とクラフト提案を導く）
  */
-export function getReadyCrafts(plan: ProductionPlan): ReadyCraft[] {
-  return plan.items
-    .filter((entry) => !entry.completed)
-    .flatMap((entry) =>
-      analyzeEntry(entry, plan.inventory).steps.flatMap((step, stepIndex) =>
-        step.craftableNow > 0 ? [{ entry, stepIndex, recipe: step.recipe, runs: step.craftableNow }] : [],
-      ),
-    );
+export function analyzePlan(plan: ProductionPlan): PlanAnalysis {
+  const analyzed = plan.items.map((entry): AnalyzedEntry => ({ entry, analysis: analyzeEntry(entry, plan.inventory) }));
+  const pending = analyzed.filter(({ entry }) => !entry.completed);
+  const crafts = collectReadyCrafts(pending);
+  return {
+    entries: new Map(analyzed.map(({ entry, analysis }) => [entry.id, analysis])),
+    rows: buildInventoryRows(plan.inventory, pending),
+    crafts,
+    craftsByInput: groupCraftsByInput(crafts),
+  };
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { CatalogTree } from "./components/CatalogTree";
 import { GitHubIcon } from "./components/GitHubIcon";
@@ -14,8 +14,7 @@ import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-st
 import {
   addItemToPlan,
   addUpgradeToPlan,
-  getInventoryRows,
-  getReadyCraftsByInput,
+  analyzePlan,
   recordStepRuns,
   removeItemFromPlan,
   setInventory,
@@ -98,6 +97,8 @@ export const App = () => {
     updateProductionPlan(recordStepRuns(productionPlan, entryId, stepIndex, delta));
   };
 
+  const planAnalysis = useMemo(() => analyzePlan(productionPlan), [productionPlan]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-[1920px] mx-auto px-4">
@@ -168,8 +169,8 @@ export const App = () => {
           <div className="space-y-6">
             {/* Materials & Inventory */}
             <InventoryPanel
-              rows={getInventoryRows(productionPlan)}
-              craftsByInput={getReadyCraftsByInput(productionPlan)}
+              rows={planAnalysis.rows}
+              craftsByInput={planAnalysis.craftsByInput}
               onUpdateInventory={handleUpdateInventory}
               onRecordStepRuns={handleRecordStepRuns}
             />
@@ -177,6 +178,7 @@ export const App = () => {
             {/* Production Plan List */}
             <ProductionPlanList
               plan={productionPlan}
+              analysis={planAnalysis}
               onRemoveItem={handleRemoveFromPlan}
               onToggleCompletion={handleToggleCompletion}
               onRecordStepRuns={handleRecordStepRuns}
