@@ -126,8 +126,11 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
   const produced = new Map<string, number>();
   const producedItems = new Set(recipes.flatMap((recipe) => recipe.outputs.map((output) => output.item)));
 
+  // 最終成果物も要求として扱う（在庫パネルに行を出し、最終ステップの実行をそこに付けるため）
   if (entry.kind === "upgrade") {
     for (const requirement of entry.requirements) addAmount(demand, requirement.item, requirement.amount);
+  } else {
+    addAmount(demand, entry.itemId, entry.amount);
   }
 
   const steps = recipes.map((recipe, index): StepStatus => {
@@ -347,7 +350,7 @@ export type PlanAnalysis = {
   entries: Map<string, EntryAnalysis>; // エントリ id → 分析結果（完了済みも含む）
   rows: InventoryRow[]; // 在庫パネルの行
   crafts: ReadyCraft[]; // 今の在庫で実行できる製造ステップ（未完了エントリのみ）
-  craftsByInput: Map<string, ReadyCraft[]>; // crafts を入力アイテムごとにまとめたもの（在庫パネルの表示用）
+  craftsByOutput: Map<string, ReadyCraft[]>; // crafts を出力アイテムごとにまとめたもの（在庫パネルの表示用）
 };
 
 type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
@@ -381,14 +384,14 @@ function collectReadyCrafts(pending: AnalyzedEntry[]): ReadyCraft[] {
   );
 }
 
-function groupCraftsByInput(crafts: ReadyCraft[]): Map<string, ReadyCraft[]> {
-  const byInput = new Map<string, ReadyCraft[]>();
+function groupCraftsByOutput(crafts: ReadyCraft[]): Map<string, ReadyCraft[]> {
+  const byOutput = new Map<string, ReadyCraft[]>();
   for (const craft of crafts) {
-    for (const input of craft.recipe.inputs) {
-      byInput.set(input.item, [...(byInput.get(input.item) ?? []), craft]);
+    for (const output of craft.recipe.outputs) {
+      byOutput.set(output.item, [...(byOutput.get(output.item) ?? []), craft]);
     }
   }
-  return byInput;
+  return byOutput;
 }
 
 /**
@@ -402,6 +405,6 @@ export function analyzePlan(plan: ProductionPlan): PlanAnalysis {
     entries: new Map(analyzed.map(({ entry, analysis }) => [entry.id, analysis])),
     rows: buildInventoryRows(plan.inventory, pending),
     crafts,
-    craftsByInput: groupCraftsByInput(crafts),
+    craftsByOutput: groupCraftsByOutput(crafts),
   };
 }

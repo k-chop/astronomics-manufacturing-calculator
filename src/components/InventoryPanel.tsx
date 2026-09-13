@@ -7,7 +7,7 @@ import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type InventoryPanelProps = {
   rows: InventoryRow[];
-  craftsByInput: Map<string, ReadyCraft[]>;
+  craftsByOutput: Map<string, ReadyCraft[]>; // 出力アイテム id → 今実行できる製造ステップ
   onUpdateInventory: (itemId: string, amount: number) => void;
   onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
   locale?: Locale;
@@ -18,7 +18,7 @@ const runButtonClass =
 
 export function InventoryPanel({
   rows,
-  craftsByInput,
+  craftsByOutput,
   onUpdateInventory,
   onRecordStepRuns,
   locale = "en",
@@ -51,7 +51,7 @@ export function InventoryPanel({
         </thead>
         <tbody>
           {rows.map((row) => {
-            const crafts = craftsByInput.get(row.item) ?? [];
+            const crafts = craftsByOutput.get(row.item) ?? [];
             return (
               <tr key={row.item} className="border-t border-blue-100 align-top">
                 <td className="py-1.5 pr-2 break-words">
@@ -62,10 +62,10 @@ export function InventoryPanel({
                         <div
                           key={`${craft.entry.id}:${craft.stepIndex}`}
                           className="flex items-center gap-2 flex-wrap text-xs"
-                          title={`${getEntryTitle(craft.entry, locale)} · ${formatItemStacks(craft.recipe.inputs, locale)}`}
+                          title={`${getEntryTitle(craft.entry, locale)} · ${formatItemStacks(craft.recipe.inputs, locale)} → ${formatItemStacks(craft.recipe.outputs, locale)}`}
                         >
                           <span className="text-green-700">
-                            → {formatItemStacks(craft.recipe.outputs, locale)} ({formatNumber(craft.runs)}×)
+                            ← {formatItemStacks(craft.recipe.inputs, locale)} ({formatNumber(craft.runs)}×)
                           </span>
                           <button
                             type="button"

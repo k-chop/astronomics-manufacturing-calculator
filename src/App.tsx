@@ -166,7 +166,7 @@ export const App = () => {
             {/* Materials & Inventory */}
             <InventoryPanel
               rows={planAnalysis.rows}
-              craftsByInput={planAnalysis.craftsByInput}
+              craftsByOutput={planAnalysis.craftsByOutput}
               onUpdateInventory={handleUpdateInventory}
               onRecordStepRuns={handleRecordStepRuns}
             />

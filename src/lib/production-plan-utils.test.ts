@@ -369,9 +369,11 @@ describe("analyzePlan の rows", () => {
     plan = addUpgradeToPlan(plan, "fuel-capacity", 1);
     plan = toggleItemCompletion(plan, plan.items[2].id);
 
+    // item エントリは最終成果物（Copper Wire 40）も行に出る（作れるので missing 0）
     expect(analyzePlan(plan).rows).toEqual([
       { item: "iron", required: 1010, have: 100, missing: 910 },
       { item: "cobalt", required: 800, have: 0, missing: 800 },
+      { item: "copper-wire", required: 40, have: 0, missing: 0 },
       { item: "copper", required: 30, have: 0, missing: 30 },
     ]);
   });
@@ -412,7 +414,7 @@ describe("analyzePlan の rows と中間材料", () => {
       { item: "fiber-optic-strands", required: 400, have: 0, missing: 0 },
       { item: "gem-dust", required: 400, have: 400, missing: 0 },
     ]);
-    const crafts = analyzePlan(plan).craftsByInput.get("gem-dust");
+    const crafts = analyzePlan(plan).craftsByOutput.get("fiber-optic-strands");
     expect(crafts?.map((craft) => [craft.recipe.outputs[0].item, craft.runs])).toEqual([["fiber-optic-strands", 8]]);
   });
 
@@ -471,13 +473,28 @@ describe("analyzePlan の crafts", () => {
     expect(analyzePlan(plan).crafts).toEqual([]);
   });
 
-  it("入力アイテムごとにまとめられる", () => {
+  it("出力アイテムごとにまとめられる", () => {
     const plan = graphitePlan({ biomass: 120, carbon: 50 });
-    const byInput = analyzePlan(plan).craftsByInput;
+    const byOutput = analyzePlan(plan).craftsByOutput;
 
-    expect(byInput.get("biomass")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[1, 2]]);
-    expect(byInput.get("carbon")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[0, 1]]);
-    expect(byInput.has("graphite")).toBe(false);
+    expect(byOutput.get("carbon")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[1, 2]]);
+    expect(byOutput.get("graphite")?.map((craft) => [craft.stepIndex, craft.runs])).toEqual([[0, 1]]);
+    expect(byOutput.has("biomass")).toBe(false);
+  });
+
+  it("item エントリの最終成果物は行に出て、途中まで作った分は在庫として数えられる", () => {
+    let plan = graphitePlan({ carbon: 100 });
+    const id = plan.items[0].id;
+    expect(analyzePlan(plan).rows).toEqual([
+      { item: "carbon", required: 100, have: 100, missing: 0 },
+      { item: "graphite", required: 20, have: 0, missing: 0 },
+    ]);
+
+    plan = recordStepRuns(plan, id, 0, 1);
+    expect(analyzePlan(plan).rows).toEqual([
+      { item: "carbon", required: 50, have: 50, missing: 0 },
+      { item: "graphite", required: 20, have: 10, missing: 0 },
+    ]);
   });
 });
 
