@@ -1,7 +1,7 @@
 import { getAliasItems } from "../data/aliases";
-import { getAsteroidInfo } from "../data/asteroid";
 import { getItemName, type Locale } from "../data/item-names";
 import { rawMaterials } from "../data/raw-materials";
+import { FoundOnList } from "./FoundOnList";
 import { RawMaterialIcon } from "./RawMaterialIcon";
 
 type ItemWithTooltipProps = {
@@ -47,23 +47,7 @@ export function ItemWithTooltip({
           {showFoundOn && (
             <div>
               <div className="font-semibold mb-1">Found on:</div>
-              <div className="space-y-0.5">
-                {rawMaterial.foundOn.map((asteroid) => {
-                  const info = getAsteroidInfo(asteroid, locale);
-                  if (info.region && info.compositon) {
-                    return (
-                      <div key={asteroid} className="flex gap-2 whitespace-nowrap">
-                        <span className="font-mono inline-block w-9 text-right">{info.name}</span>
-                        <span>-</span>
-                        <span className="inline-block min-w-32">{info.region}</span>
-                        <span className="text-gray-400">({info.compositon})</span>
-                      </div>
-                    );
-                  } else {
-                    return <div key={asteroid}>{info.name}</div>;
-                  }
-                })}
-              </div>
+              <FoundOnList foundOn={rawMaterial.foundOn} locale={locale} />
             </div>
           )}
         </span>

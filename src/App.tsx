@@ -6,6 +6,7 @@ import { InventoryPanel } from "./components/InventoryPanel";
 import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { ProductionPlanList } from "./components/ProductionPlanList";
+import { RawMaterialSource } from "./components/RawMaterialSource";
 import { UpgradeResult } from "./components/UpgradeResult";
 import { calculateManufacturing } from "./lib/calculator";
 import { getSelectionId, type Selection } from "./lib/catalog-tree";
@@ -125,6 +126,9 @@ export const App = () => {
                 Select an item or upgrade from the list.
               </div>
             )}
+
+            {/* Raw Material Source (shown above recipes when the item can be collected) */}
+            {selectedItem && <RawMaterialSource itemId={selectedItem} />}
 
             {/* Upgrade Requirements */}
             {selectedUpgrade && (
