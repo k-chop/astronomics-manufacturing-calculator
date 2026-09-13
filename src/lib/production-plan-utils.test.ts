@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProductionPlan } from "../types/production-plan";
 import { calculateManufacturing } from "./calculator";
-import { migrateProductionPlan } from "./production-plan-storage";
+import { parseProductionPlan } from "./production-plan-storage";
 import {
   addItemToPlan,
   addUpgradeToPlan,
@@ -481,49 +481,17 @@ describe("analyzePlan の crafts", () => {
   });
 });
 
-describe("migrateProductionPlan", () => {
-  it("materialProgress 付きの旧データを在庫に合算し、stepProgress を 0 埋めする", () => {
-    const upgradeEntry = addUpgradeToPlan(emptyProductionPlan, "fuel-capacity", 2).items[0];
-    if (upgradeEntry.kind !== "upgrade") throw new Error("upgrade エントリではない");
-    const legacy = {
-      items: [
-        {
-          id: "legacy-1",
-          itemId: "copper-wire",
-          amount: 40,
-          selectedPatternIndex: 0,
-          completed: false,
-          calculationResults: results("copper-wire", 40),
-          materialProgress: { copper: { required: 30, collected: 12 }, iron: { required: 10, collected: 0 } },
-        },
-        {
-          kind: "upgrade",
-          id: "legacy-2",
-          upgradeId: "fuel-capacity",
-          level: 2,
-          completed: false,
-          requirements: upgradeEntry.requirements,
-          materialProgress: { chromite: { required: 400, collected: 100 }, "any-gem": { required: 300, collected: 0 } },
-        },
-      ],
-    };
-
-    const migrated = migrateProductionPlan(legacy);
-    expect(migrated.inventory).toEqual({ copper: 12, chromite: 100 });
-    expect(migrated.items.map((entry) => entry.kind)).toEqual(["item", "upgrade"]);
-    expect(migrated.items.map((entry) => entry.stepProgress)).toEqual([[0], [0, 0]]);
-    expect(migrated.items.some((entry) => "materialProgress" in entry)).toBe(false);
-  });
-
+describe("parseProductionPlan", () => {
   it("現在の形式はそのまま返す", () => {
     let plan = graphitePlan({ biomass: 500 });
     plan = recordStepRuns(plan, plan.items[0].id, 1, 2);
-    expect(migrateProductionPlan(JSON.parse(JSON.stringify(plan)))).toEqual(plan);
+    expect(parseProductionPlan(JSON.parse(JSON.stringify(plan)))).toEqual(plan);
   });
 
-  it("不正な値は空の plan にする", () => {
-    expect(migrateProductionPlan(null)).toEqual(emptyProductionPlan);
-    expect(migrateProductionPlan({ foo: 1 })).toEqual(emptyProductionPlan);
-    expect(migrateProductionPlan({ items: "x" })).toEqual(emptyProductionPlan);
+  it("不正な値や inventory のない旧形式は空の plan にする", () => {
+    expect(parseProductionPlan(null)).toEqual(emptyProductionPlan);
+    expect(parseProductionPlan({ foo: 1 })).toEqual(emptyProductionPlan);
+    expect(parseProductionPlan({ items: "x" })).toEqual(emptyProductionPlan);
+    expect(parseProductionPlan({ items: [] })).toEqual(emptyProductionPlan);
   });
 });
