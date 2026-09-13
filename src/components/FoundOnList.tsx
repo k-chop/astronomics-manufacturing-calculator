@@ -18,7 +18,7 @@ export function FoundOnList({ foundOn, locale = "en", mutedClassName = "text-gra
         if (info.region && info.compositon) {
           return (
             <div key={asteroid} className="flex gap-2 whitespace-nowrap">
-              <span className="font-mono inline-block w-9 text-right">{info.name}</span>
+              <span className="font-mono inline-block w-9">{info.name}</span>
               <span>-</span>
               <span className="inline-block min-w-32">{info.region}</span>
               <span className={mutedClassName}>({info.compositon})</span>
