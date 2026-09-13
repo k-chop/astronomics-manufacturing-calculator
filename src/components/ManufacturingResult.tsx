@@ -1,7 +1,7 @@
 import { getItemName, type Locale } from "../data/item-names";
 import { getMachineName } from "../data/machines";
 import { type CalculationResult, getRecipeKey, getResultKey } from "../lib/calculator";
-import { formatDuration } from "../lib/format-utils";
+import { formatDuration, formatNumber } from "../lib/format-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type ManufacturingResultProps = {
@@ -10,7 +10,7 @@ type ManufacturingResultProps = {
   targetAmount: number;
   onAmountChange: (newAmount: number) => void;
   onReset: () => void;
-  onAddToPlan: () => void;
+  onAddToPlan: (patternIndex: number) => void;
   locale?: Locale;
 };
 
@@ -26,16 +26,7 @@ export function ManufacturingResult({
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-semibold">Manufacturing {getItemName(targetItem, locale)}</div>
-          <button
-            type="button"
-            onClick={onAddToPlan}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
-          >
-            Add to Plan
-          </button>
-        </div>
+        <div className="text-lg font-semibold mb-4">Manufacturing {getItemName(targetItem, locale)}</div>
         <div className="flex items-center gap-3 flex-wrap">
           <input
             type="number"
@@ -93,9 +84,21 @@ export function ManufacturingResult({
 
       {results.map((result, patternIndex) => (
         <div key={getResultKey(result)} className="border border-gray-300 rounded-lg p-4 bg-white shadow">
-          <div className="mb-3 pb-3 border-b border-gray-200">
-            <div className="text-sm text-gray-600">Pattern {patternIndex + 1}</div>
-            <div className="text-xl font-bold text-blue-600">Total Time: {formatDuration(result.totalDuration)}</div>
+          <div className="mb-3 pb-3 border-b border-gray-200 flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm text-gray-600">Pattern {patternIndex + 1}</div>
+              <div className="text-xl font-bold text-blue-600">Total Time: {formatDuration(result.totalDuration)}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onAddToPlan(patternIndex)}
+              className="flex flex-col items-end gap-1 px-5 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md shrink-0 text-right"
+            >
+              <span className="font-medium leading-none">Add to Plan</span>
+              <span className="text-xs text-purple-200 leading-none">
+                {formatNumber(targetAmount)} × {getItemName(targetItem, locale)}
+              </span>
+            </button>
           </div>
 
           {/* Required Raw Materials */}
@@ -105,7 +108,9 @@ export function ManufacturingResult({
               {result.totalItems.map((item) => (
                 <div key={item.item} className="flex items-center gap-2">
                   <ItemWithTooltip itemId={item.item} locale={locale} className="text-gray-700" />
-                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">× {item.amount}</span>
+                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                    × {formatNumber(item.amount)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -120,7 +125,7 @@ export function ManufacturingResult({
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium text-blue-700">{getMachineName(recipe.machine, locale)}</div>
                     <div className="text-sm text-gray-600">
-                      {formatDuration(recipe.duration)} × {recipe.count} ={" "}
+                      {formatDuration(recipe.duration)} × {formatNumber(recipe.count)} ={" "}
                       {formatDuration(recipe.duration * recipe.count)}
                     </div>
                   </div>
@@ -131,14 +136,14 @@ export function ManufacturingResult({
                       {recipe.inputs.map((input) => (
                         <div key={input.item} className="text-gray-700">
                           <ItemWithTooltip itemId={input.item} locale={locale} />
-                          <span className="font-mono text-xs ml-1">× {input.amount}</span>
+                          <span className="font-mono text-xs ml-1">× {formatNumber(input.amount)}</span>
                         </div>
                       ))}
                     </div>
 
                     {/* Arrow */}
                     <div className="text-center text-gray-400">
-                      <div className="text-xs mb-1">× {recipe.count} times</div>
+                      <div className="text-xs mb-1">× {formatNumber(recipe.count)} times</div>
                       <div>→</div>
                     </div>
 
@@ -147,14 +152,14 @@ export function ManufacturingResult({
                       {recipe.outputs.map((output) => (
                         <div key={output.item} className="text-gray-700 font-medium">
                           {getItemName(output.item, locale)}
-                          <span className="font-mono text-xs ml-1">× {output.amount}</span>
+                          <span className="font-mono text-xs ml-1">× {formatNumber(output.amount)}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   <div className="mt-2 text-xs text-gray-500">
-                    Total produced: {recipe.outputs[0].amount * recipe.count} ×{" "}
+                    Total produced: {formatNumber(recipe.outputs[0].amount * recipe.count)} ×{" "}
                     {getItemName(recipe.outputs[0].item, locale)}
                   </div>
                 </div>

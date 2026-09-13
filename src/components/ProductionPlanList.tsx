@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { getItemName, type Locale } from "../data/item-names";
 import { getUpgradeName } from "../data/upgrades";
+import { formatNumber } from "../lib/format-utils";
 import { getEntryMaterials } from "../lib/production-plan-utils";
 import type { ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
@@ -20,7 +21,7 @@ function EntryTitle({ entry, locale }: { entry: ProductionPlanEntry; locale: Loc
   if (entry.kind === "item") {
     return (
       <div className={titleClass}>
-        {entry.amount} × {getItemName(entry.itemId, locale)}
+        {formatNumber(entry.amount)} × {getItemName(entry.itemId, locale)}
       </div>
     );
   }
@@ -35,7 +36,7 @@ function EntryTitle({ entry, locale }: { entry: ProductionPlanEntry; locale: Loc
       </div>
       <div className="text-xs text-gray-500 mt-0.5">
         {entry.requirements
-          .map((requirement) => `${getItemName(requirement.item, locale)} ×${requirement.amount}`)
+          .map((requirement) => `${getItemName(requirement.item, locale)} ×${formatNumber(requirement.amount)}`)
           .join(", ")}
       </div>
     </div>
@@ -172,7 +173,7 @@ export function ProductionPlanList({
                               onChange={(e) => onUpdateMaterialProgress(item.id, material.item, Number(e.target.value))}
                               className="w-20 px-2 py-1 text-sm border border-gray-300 rounded"
                             />
-                            <span className="text-sm text-gray-600">/ {progress.required}</span>
+                            <span className="text-sm text-gray-600">/ {formatNumber(progress.required)}</span>
                           </div>
                         </div>
                       );

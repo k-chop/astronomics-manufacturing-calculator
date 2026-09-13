@@ -1,5 +1,6 @@
 import type { Locale } from "../data/item-names";
 import type { ItemStack } from "../data/recipes";
+import { formatNumber } from "../lib/format-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type MaterialsSummaryProps = {
@@ -21,7 +22,7 @@ export function MaterialsSummary({ materials, locale = "en" }: MaterialsSummaryP
           <div key={material.item} className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <ItemWithTooltip itemId={material.item} locale={locale} className="text-sm font-medium text-gray-700" />
-              <span className="font-mono text-lg font-bold text-blue-600 ml-2">{material.amount}</span>
+              <span className="font-mono text-lg font-bold text-blue-600 ml-2">{formatNumber(material.amount)}</span>
             </div>
           </div>
         ))}

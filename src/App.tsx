@@ -68,9 +68,9 @@ export const App = () => {
     }
   };
 
-  const handleAddToPlan = () => {
+  const handleAddToPlan = (patternIndex: number) => {
     if (selectedItem && results && results.length > 0) {
-      updateProductionPlan(addItemToPlan(productionPlan, selectedItem, amount, results));
+      updateProductionPlan(addItemToPlan(productionPlan, selectedItem, amount, results, patternIndex));
     }
   };
 

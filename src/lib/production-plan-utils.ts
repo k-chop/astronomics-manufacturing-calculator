@@ -71,22 +71,24 @@ function createMaterialProgress(materials: ItemStack[]): MaterialProgress {
 
 /**
  * 生産計画にアイテムを追加
+ * selectedPatternIndex で作るパターンを指定する（範囲外なら最速パターン = 0）
  */
 export function addItemToPlan(
   plan: ProductionPlan,
   itemId: string,
   amount: number,
   calculationResults: CalculationResult[],
+  selectedPatternIndex = 0,
 ): ProductionPlan {
-  // 初期状態：最速パターン（results[0]）を選択
-  const selectedResult = calculationResults[0];
+  const patternIndex = selectedPatternIndex in calculationResults ? selectedPatternIndex : 0;
+  const selectedResult = calculationResults[patternIndex];
 
   const newItem: ProductionPlanItem = {
     kind: "item",
     id: generateId(),
     itemId,
     amount,
-    selectedPatternIndex: 0,
+    selectedPatternIndex: patternIndex,
     completed: false,
     calculationResults,
     materialProgress: createMaterialProgress(selectedResult.totalItems),

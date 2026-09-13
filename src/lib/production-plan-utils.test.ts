@@ -15,6 +15,41 @@ import {
 
 const emptyPlan: ProductionPlan = { items: [] };
 
+describe("addItemToPlan", () => {
+  // Carbon 10 は「Biomass を採取」と「Water → Biomass」の2パターン
+  const carbonResults = calculateManufacturing("carbon", 10);
+  if (!carbonResults) throw new Error("carbon のレシピがない");
+
+  it("省略時は最速パターン（index 0）で追加される", () => {
+    const plan = addItemToPlan(emptyPlan, "carbon", 10, carbonResults);
+    const entry = plan.items[0];
+
+    expect(carbonResults).toHaveLength(2);
+    expect(entry.kind).toBe("item");
+    if (entry.kind !== "item") throw new Error("item エントリではない");
+    expect(entry.selectedPatternIndex).toBe(0);
+    expect(entry.materialProgress).toEqual({ biomass: { required: 50, collected: 0 } });
+  });
+
+  it("指定したパターンで追加され、原材料もそのパターンのものになる", () => {
+    const plan = addItemToPlan(emptyPlan, "carbon", 10, carbonResults, 1);
+    const entry = plan.items[0];
+
+    if (entry.kind !== "item") throw new Error("item エントリではない");
+    expect(entry.selectedPatternIndex).toBe(1);
+    expect(entry.materialProgress).toEqual({ water: { required: 500, collected: 0 } });
+    expect(getEntryMaterials(entry)).toEqual([{ item: "water", amount: 500 }]);
+  });
+
+  it("範囲外のパターン index は 0 に丸められる", () => {
+    const plan = addItemToPlan(emptyPlan, "carbon", 10, carbonResults, 99);
+    const entry = plan.items[0];
+
+    if (entry.kind !== "item") throw new Error("item エントリではない");
+    expect(entry.selectedPatternIndex).toBe(0);
+  });
+});
+
 describe("addUpgradeToPlan", () => {
   it("原材料だけの要求はそのまま進捗に登録される: fuel-capacity Lv1", () => {
     const plan = addUpgradeToPlan(emptyPlan, "fuel-capacity", 1);

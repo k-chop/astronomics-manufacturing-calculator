@@ -1,5 +1,6 @@
 import { getItemName, type Locale } from "../data/item-names";
 import { getUpgradeLevel, getUpgradeName } from "../data/upgrades";
+import { formatNumber } from "../lib/format-utils";
 import { getUpgradeRequirementMaterials, resolveUpgradeRequirements } from "../lib/production-plan-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
@@ -25,14 +26,17 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
             <div className="text-lg font-semibold">
               {getUpgradeName(upgradeId, locale)} Lv{level}
             </div>
-            <div className="text-sm text-gray-600">{upgradeLevel.credits}◆</div>
+            <div className="text-sm text-gray-600">{formatNumber(upgradeLevel.credits)}◆</div>
           </div>
           <button
             type="button"
             onClick={onAddToPlan}
-            className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium shadow-md"
+            className="flex flex-col items-end gap-1 px-5 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md shrink-0 text-right"
           >
-            Add to Plan
+            <span className="font-medium leading-none">Add to Plan</span>
+            <span className="text-xs text-purple-200 leading-none">
+              {getUpgradeName(upgradeId, locale)} Lv{level}
+            </span>
           </button>
         </div>
 
@@ -44,13 +48,15 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
               <div key={requirement.item} className="border border-gray-200 rounded p-3 bg-gray-50">
                 <div className="flex items-center gap-2">
                   <ItemWithTooltip itemId={requirement.item} locale={locale} className="text-gray-700 font-medium" />
-                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">× {requirement.amount}</span>
+                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                    × {formatNumber(requirement.amount)}
+                  </span>
                 </div>
                 {requirement.calculationResults !== null && (
                   <div className="mt-1 text-xs text-gray-500">
                     →{" "}
                     {requirement.calculationResults[0].totalItems
-                      .map((material) => `${getItemName(material.item, locale)} × ${material.amount}`)
+                      .map((material) => `${getItemName(material.item, locale)} × ${formatNumber(material.amount)}`)
                       .join(", ")}
                   </div>
                 )}
@@ -66,7 +72,9 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
             {materials.map((material) => (
               <div key={material.item} className="flex items-center gap-2">
                 <ItemWithTooltip itemId={material.item} locale={locale} className="text-gray-700" />
-                <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">× {material.amount}</span>
+                <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                  × {formatNumber(material.amount)}
+                </span>
               </div>
             ))}
           </div>
