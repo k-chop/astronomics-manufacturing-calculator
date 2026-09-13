@@ -7,7 +7,6 @@ import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { ProductionPlanList } from "./components/ProductionPlanList";
 import { UpgradeResult } from "./components/UpgradeResult";
-import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
 import { getSelectionId, type Selection } from "./lib/catalog-tree";
 import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-storage";
@@ -26,7 +25,6 @@ import type { ProductionPlan } from "./types/production-plan";
 export const App = () => {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [amount, setAmount] = useState<number>(1);
-  const [results, setResults] = useState<CalculationResult[] | null>(null);
   const [productionPlan, setProductionPlan] = useState<ProductionPlan>(() => {
     // 初期値としてlocalStorageから読み込む
     return loadProductionPlan();
@@ -41,11 +39,7 @@ export const App = () => {
   const handleSelect = (newSelection: Selection) => {
     setSelection(newSelection);
     if (newSelection.kind === "item") {
-      const minAmount = getMinimumAmount(newSelection.itemId);
-      setAmount(minAmount);
-      setResults(calculateManufacturing(newSelection.itemId, minAmount));
-    } else {
-      setResults(null);
+      setAmount(getMinimumAmount(newSelection.itemId));
     }
   };
 
@@ -55,17 +49,19 @@ export const App = () => {
   const selectedItem = selection?.kind === "item" ? selection.itemId : null;
   const selectedUpgrade = selection?.kind === "upgrade" ? selection : null;
 
+  // 計算結果は選択中アイテムと個数から導出する
+  const results = useMemo(
+    () => (selectedItem ? calculateManufacturing(selectedItem, amount) : null),
+    [selectedItem, amount],
+  );
+
   const handleAmountChange = (newAmount: number) => {
-    const validAmount = Math.max(1, newAmount);
-    setAmount(validAmount);
-    if (selectedItem) {
-      setResults(calculateManufacturing(selectedItem, validAmount));
-    }
+    setAmount(Math.max(1, newAmount));
   };
 
   const handleReset = () => {
     if (selectedItem) {
-      handleAmountChange(getMinimumAmount(selectedItem));
+      setAmount(getMinimumAmount(selectedItem));
     }
   };
 
