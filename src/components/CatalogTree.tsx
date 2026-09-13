@@ -99,32 +99,35 @@ export function CatalogTree({ selectedId, onSelect, locale = "en" }: CatalogTree
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4">
-      <div className="relative mb-3">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter items and upgrades..."
-          aria-label="Filter items and upgrades"
-          className="w-full px-3 py-2 pr-8 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {isFiltering && (
-          <button
-            type="button"
-            aria-label="Clear filter"
-            onClick={() => setQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 text-xs leading-none hover:bg-gray-300 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            ✕
-          </button>
-        )}
+    <div className="bg-white rounded-lg shadow-md">
+      {/* スクロールしても検索窓は上部に固定する（余白と背景を持たせてツリーが下を通っても透けないようにする） */}
+      <div className="sticky top-0 z-10 bg-white rounded-t-lg px-4 pt-4 pb-3">
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter items and upgrades..."
+            aria-label="Filter items and upgrades"
+            className="w-full px-3 py-2 pr-8 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {isFiltering && (
+            <button
+              type="button"
+              aria-label="Clear filter"
+              onClick={() => setQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 text-gray-500 text-xs leading-none hover:bg-gray-300 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {visibleTree.length === 0 ? (
-        <p className="text-sm text-gray-500 px-2">No items or upgrades match.</p>
+        <p className="text-sm text-gray-500 px-6 pb-4">No items or upgrades match.</p>
       ) : (
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 px-4 pb-4">
           {visibleTree.map((node) => (
             <TreeNodeView
               key={node.id}
