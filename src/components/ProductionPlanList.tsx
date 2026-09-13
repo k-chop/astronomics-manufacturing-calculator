@@ -5,7 +5,7 @@ import { getUpgradeName } from "../data/upgrades";
 import { getRecipeKey } from "../lib/calculator";
 import { formatDuration, formatNumber } from "../lib/format-utils";
 import { formatRecipe } from "../lib/plan-format";
-import { analyzeEntry, isMaterialsCovered } from "../lib/production-plan-utils";
+import { analyzeEntry, isMaterialsCovered, isReadyToFinish } from "../lib/production-plan-utils";
 import type { Inventory, ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
@@ -217,14 +217,23 @@ export function ProductionPlanList({
           const covered = isMaterialsCovered(statuses);
           const doneSteps = steps.filter((step) => step.remaining === 0).length;
           const isExpanded = expandedItems.has(entry.id);
+          const ready = isReadyToFinish(entry, plan.inventory);
+          const cardClass = entry.completed
+            ? "bg-gray-50 border-gray-300 opacity-60"
+            : ready
+              ? "bg-green-50 border-green-500 ring-2 ring-green-300"
+              : "bg-white border-gray-200";
 
           return (
-            <div
-              key={entry.id}
-              className={`border rounded-lg p-4 ${
-                entry.completed ? "bg-gray-50 border-gray-300 opacity-60" : "bg-white border-gray-200"
-              }`}
-            >
+            <div key={entry.id} className={`border rounded-lg p-4 ${cardClass}`}>
+              {ready && (
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded bg-green-600 text-white text-sm font-bold">
+                  <span aria-hidden="true">🚀</span>
+                  {entry.kind === "upgrade"
+                    ? "Ready! You have everything for this upgrade. Go build it!"
+                    : "Ready! You can craft all of this right now."}
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1">
                   <input

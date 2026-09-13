@@ -18,6 +18,7 @@ import {
   getReadyCraftsByInput,
   getUpgradeRequirementMaterials,
   isMaterialsCovered,
+  isReadyToFinish,
   recordStepRuns,
   setInventory,
   toggleItemCompletion,
@@ -295,6 +296,34 @@ describe("getMaterialStatus", () => {
     expect(statuses).toEqual([{ item: "biomass", need: 500, have: 120, shortage: 380 }]);
     expect(isMaterialsCovered(statuses)).toBe(false);
     expect(isMaterialsCovered(getMaterialStatus(plan.items[0], { biomass: 600 }))).toBe(true);
+  });
+});
+
+describe("isReadyToFinish", () => {
+  it("upgrade は要求資源がすべて在庫にあれば ready", () => {
+    const plan = addUpgradeToPlan(emptyProductionPlan, "fuel-capacity", 2);
+    const entry = plan.items[0];
+    expect(isReadyToFinish(entry, { chromite: 400, "fiber-optic-strands": 299 })).toBe(false);
+    expect(isReadyToFinish(entry, { chromite: 400, "fiber-optic-strands": 300 })).toBe(true);
+  });
+
+  it("item は最終レシピの残りをすべて今の在庫で実行できれば ready", () => {
+    const plan = graphitePlan();
+    const entry = plan.items[0];
+    // carbon 50 → graphite 10 を 2 回: carbon 100 で ready、biomass だけでは ready ではない
+    expect(isReadyToFinish(entry, { biomass: 500 })).toBe(false);
+    expect(isReadyToFinish(entry, { carbon: 50 })).toBe(false);
+    expect(isReadyToFinish(entry, { carbon: 100 })).toBe(true);
+  });
+
+  it("完了済みは ready ではない", () => {
+    let plan = addUpgradeToPlan(
+      { ...emptyProductionPlan, inventory: { chromite: 400, "fiber-optic-strands": 300 } },
+      "fuel-capacity",
+      2,
+    );
+    plan = toggleItemCompletion(plan, plan.items[0].id);
+    expect(isReadyToFinish(plan.items[0], plan.inventory)).toBe(false);
   });
 });
 

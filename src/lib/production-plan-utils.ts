@@ -179,6 +179,20 @@ export function isMaterialsCovered(statuses: MaterialStatus[]): boolean {
   return statuses.every((status) => status.shortage === 0);
 }
 
+/**
+ * 「あとは仕上げるだけ」か: 今の在庫だけでエントリの最終成果を得られる
+ * - upgrade: 要求資源がすべて在庫にある（アップグレードを実行できる）
+ * - item: 最終レシピ（先頭ステップ）の残り回数をすべて今の在庫で実行できる
+ */
+export function isReadyToFinish(entry: ProductionPlanEntry, inventory: Inventory): boolean {
+  if (entry.completed) return false;
+  if (entry.kind === "upgrade") {
+    return entry.requirements.every((requirement) => (inventory[requirement.item] ?? 0) >= requirement.amount);
+  }
+  const root = analyzeEntry(entry, inventory).steps[0];
+  return root !== undefined && root.remaining > 0 && root.craftableNow === root.remaining;
+}
+
 function adjustInventory(inventory: Inventory, item: string, delta: number): Inventory {
   const next = Math.max(0, (inventory[item] ?? 0) + delta);
   const result = { ...inventory };
