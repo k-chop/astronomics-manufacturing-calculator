@@ -4,6 +4,7 @@ import { aliases } from "./aliases";
 import { itemNames } from "./item-names";
 import { rawMaterials } from "./raw-materials";
 import { recipes } from "./recipes";
+import { upgrades } from "./upgrades";
 
 describe("データ整合性", () => {
   it("レシピが参照するアイテムはすべて表示名を持ち、原材料かレシピ持ちのどちらかである", () => {
@@ -41,6 +42,31 @@ describe("データ整合性", () => {
       for (const item of items) {
         expect(rawMaterials, `${aliasId} の構成アイテム ${item} が原材料にない`).toHaveProperty(item);
       }
+    }
+  });
+
+  it("アップグレードの要求アイテムはすべて表示名を持ち、原材料かレシピ持ちのどちらかである", () => {
+    for (const upgrade of upgrades) {
+      for (const upgradeLevel of upgrade.levels) {
+        for (const requirement of upgradeLevel.requirements) {
+          const label = `${upgrade.id} Lv${upgradeLevel.level} の要求 ${requirement.item}`;
+          expect(itemNames, `${label} の表示名がない`).toHaveProperty(requirement.item);
+          expect(
+            requirement.item in rawMaterials || requirement.item in recipes,
+            `${label} が原材料でもレシピ持ちでもない`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("アップグレードの id は一意で、レベルは 1 からの連番である", () => {
+    const ids = upgrades.map((upgrade) => upgrade.id);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    for (const upgrade of upgrades) {
+      const levels = upgrade.levels.map((upgradeLevel) => upgradeLevel.level);
+      expect(levels, `${upgrade.id} のレベルが連番でない`).toEqual(levels.map((_, index) => index + 1));
     }
   });
 });

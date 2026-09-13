@@ -2,14 +2,18 @@ import { useId, useState } from "react";
 
 import { GitHubIcon } from "./components/GitHubIcon";
 import { ItemSearch } from "./components/ItemSearch";
+import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { MaterialsSummary } from "./components/MaterialsSummary";
 import { ProductionPlanList } from "./components/ProductionPlanList";
+import { UpgradeResult } from "./components/UpgradeResult";
+import { type SelectedUpgrade, UpgradeSelector } from "./components/UpgradeSelector";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
 import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-storage";
 import {
   addItemToPlan,
+  addUpgradeToPlan,
   aggregateMaterials,
   removeItemFromPlan,
   toggleItemCompletion,
@@ -22,6 +26,7 @@ export const App = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [results, setResults] = useState<CalculationResult[] | null>(null);
+  const [selectedUpgrade, setSelectedUpgrade] = useState<SelectedUpgrade | null>(null);
   const [productionPlan, setProductionPlan] = useState<ProductionPlan>(() => {
     // 初期値としてlocalStorageから読み込む
     return loadProductionPlan();
@@ -36,10 +41,17 @@ export const App = () => {
 
   const handleItemSelect = (itemId: string) => {
     const minAmount = getMinimumAmount(itemId);
+    setSelectedUpgrade(null);
     setSelectedItem(itemId);
     setAmount(minAmount);
     const calculationResults = calculateManufacturing(itemId, minAmount);
     setResults(calculationResults);
+  };
+
+  const handleUpgradeSelect = (upgradeId: string, level: number) => {
+    setSelectedItem(null);
+    setResults(null);
+    setSelectedUpgrade({ upgradeId, level });
   };
 
   const handleAmountChange = (newAmount: number) => {
@@ -61,6 +73,13 @@ export const App = () => {
   const handleAddToPlan = () => {
     if (selectedItem && results && results.length > 0) {
       const newPlan = addItemToPlan(productionPlan, selectedItem, amount, results);
+      updateProductionPlan(newPlan);
+    }
+  };
+
+  const handleAddUpgradeToPlan = () => {
+    if (selectedUpgrade) {
+      const newPlan = addUpgradeToPlan(productionPlan, selectedUpgrade.upgradeId, selectedUpgrade.level);
       updateProductionPlan(newPlan);
     }
   };
@@ -103,10 +122,22 @@ export const App = () => {
             {/* Select Item */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
-                Select Item
+                What do you want to make?
               </label>
               <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
             </div>
+
+            {/* Select Upgrade */}
+            <UpgradeSelector selected={selectedUpgrade} onSelect={handleUpgradeSelect} />
+
+            {/* Upgrade Requirements */}
+            {selectedUpgrade && (
+              <UpgradeResult
+                upgradeId={selectedUpgrade.upgradeId}
+                level={selectedUpgrade.level}
+                onAddToPlan={handleAddUpgradeToPlan}
+              />
+            )}
 
             {/* Manufacturing Results */}
             {results && selectedItem && (
@@ -121,9 +152,16 @@ export const App = () => {
             )}
 
             {results === null && selectedItem && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
-                No manufacturing recipe found for this item. It may only be available as a raw material.
-              </div>
+              <>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
+                  No manufacturing recipe found for this item. It can only be collected as a raw material.
+                </div>
+                <ItemUsage
+                  itemId={selectedItem}
+                  onSelectItem={handleItemSelect}
+                  onSelectUpgrade={handleUpgradeSelect}
+                />
+              </>
             )}
           </div>
 
@@ -145,7 +183,7 @@ export const App = () => {
         {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
           <div className="space-y-1">
-            <div>Compatible with Astronomics version 0.77.5</div>
+            <div>Compatible with Astronomics version 0.83.1</div>
             <div>
               Data sourced from{" "}
               <a

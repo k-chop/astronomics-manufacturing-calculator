@@ -34,7 +34,7 @@ export function getResultKey(result: CalculationResult): string {
   return `${result.recipes.map(getRecipeKey).join("|")}#${formatItemStacks(result.totalItems)}`;
 }
 
-function mergeItemStacks(stacks: ItemStack[]): ItemStack[] {
+export function mergeItemStacks(stacks: ItemStack[]): ItemStack[] {
   const map = new Map<string, number>();
   for (const stack of stacks) {
     const current = map.get(stack.item) ?? 0;

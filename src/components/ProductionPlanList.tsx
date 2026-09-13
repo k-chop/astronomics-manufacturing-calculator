@@ -1,7 +1,9 @@
 import { useState } from "react";
 
 import { getItemName, type Locale } from "../data/item-names";
-import type { ProductionPlan } from "../types/production-plan";
+import { getUpgradeName } from "../data/upgrades";
+import { getEntryMaterials } from "../lib/production-plan-utils";
+import type { ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type ProductionPlanListProps = {
@@ -11,6 +13,34 @@ type ProductionPlanListProps = {
   onUpdateMaterialProgress: (itemId: string, materialId: string, collected: number) => void;
   locale?: Locale;
 };
+
+function EntryTitle({ entry, locale }: { entry: ProductionPlanEntry; locale: Locale }) {
+  const titleClass = `font-semibold text-lg ${entry.completed ? "line-through text-gray-500" : "text-gray-900"}`;
+
+  if (entry.kind === "item") {
+    return (
+      <div className={titleClass}>
+        {entry.amount} × {getItemName(entry.itemId, locale)}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center gap-2">
+        <span className={titleClass}>
+          {getUpgradeName(entry.upgradeId, locale)} Lv{entry.level}
+        </span>
+        <span className="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-700">Upgrade</span>
+      </div>
+      <div className="text-xs text-gray-500 mt-0.5">
+        {entry.requirements
+          .map((requirement) => `${getItemName(requirement.item, locale)} ×${requirement.amount}`)
+          .join(", ")}
+      </div>
+    </div>
+  );
+}
 
 export function ProductionPlanList({
   plan,
@@ -46,8 +76,8 @@ export function ProductionPlanList({
       <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
       <div className="space-y-3">
         {plan.items.map((item) => {
-          const selectedResult = item.calculationResults[item.selectedPatternIndex];
-          const totalMaterials = selectedResult.totalItems.length;
+          const materials = getEntryMaterials(item);
+          const totalMaterials = materials.length;
           const collectedCount = Object.values(item.materialProgress).filter((p) => p.collected >= p.required).length;
 
           const isExpanded = expandedItems.has(item.id);
@@ -74,19 +104,16 @@ export function ProductionPlanList({
                     className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                   />
                   <div className="flex-1">
-                    <div
-                      className={`font-semibold text-lg ${
-                        item.completed ? "line-through text-gray-500" : "text-gray-900"
-                      }`}
-                    >
-                      {item.amount} × {getItemName(item.itemId, locale)}
-                    </div>
+                    <EntryTitle entry={item} locale={locale} />
                     <div className="text-sm text-gray-600 mt-1">
                       Materials: {collectedCount}/{totalMaterials} collected
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      Pattern {item.selectedPatternIndex + 1} ({selectedResult.totalDuration}s)
-                    </div>
+                    {item.kind === "item" && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Pattern {item.selectedPatternIndex + 1} (
+                        {item.calculationResults[item.selectedPatternIndex].totalDuration}s)
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -112,7 +139,7 @@ export function ProductionPlanList({
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <div className="text-sm font-semibold text-gray-700 mb-3">Material Collection Progress:</div>
                   <div className="space-y-2">
-                    {selectedResult.totalItems.map((material) => {
+                    {materials.map((material) => {
                       const progress = item.materialProgress[material.item];
                       const isComplete = progress.collected >= progress.required;
 

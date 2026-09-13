@@ -1,12 +1,72 @@
+import { isRawMaterial } from "../data/raw-materials";
 import type { ItemStack } from "../data/recipes";
-import type { MaterialProgress, ProductionPlan, ProductionPlanItem } from "../types/production-plan";
+import { getUpgradeLevel } from "../data/upgrades";
+import type {
+  MaterialProgress,
+  ProductionPlan,
+  ProductionPlanEntry,
+  ProductionPlanItem,
+  ProductionPlanUpgrade,
+  UpgradeRequirement,
+} from "../types/production-plan";
 import type { CalculationResult } from "./calculator";
+import { calculateManufacturing, mergeItemStacks } from "./calculator";
 
 /**
  * ユニークIDを生成
  */
 export function generateId(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * エントリが必要とする原材料の一覧を返す
+ * item: 選択中パターンの原材料
+ * upgrade: 原材料の要求 + レシピ持ち要求を最速パターンで展開した原材料、を合算したもの
+ */
+export function getEntryMaterials(entry: ProductionPlanEntry): ItemStack[] {
+  if (entry.kind === "item") {
+    return entry.calculationResults[entry.selectedPatternIndex].totalItems;
+  }
+  return getUpgradeRequirementMaterials(entry.requirements);
+}
+
+/**
+ * アップグレードの要求資源を原材料まで展開して合算する
+ */
+export function getUpgradeRequirementMaterials(requirements: UpgradeRequirement[]): ItemStack[] {
+  return mergeItemStacks(
+    requirements.flatMap((requirement) =>
+      requirement.calculationResults === null
+        ? [{ item: requirement.item, amount: requirement.amount }]
+        : requirement.calculationResults[0].totalItems,
+    ),
+  );
+}
+
+/**
+ * アップグレードの要求資源を計算結果付きに変換する
+ * 原材料（Carbon や Biomass のようにレシピも持つものを含む）は直接採取するものとして展開しない
+ */
+export function resolveUpgradeRequirements(requirements: ItemStack[]): UpgradeRequirement[] {
+  return requirements.map((requirement) => ({
+    item: requirement.item,
+    amount: requirement.amount,
+    calculationResults: isRawMaterial(requirement.item)
+      ? null
+      : calculateManufacturing(requirement.item, requirement.amount),
+  }));
+}
+
+function createMaterialProgress(materials: ItemStack[]): MaterialProgress {
+  const materialProgress: MaterialProgress = {};
+  for (const material of materials) {
+    materialProgress[material.item] = {
+      required: material.amount,
+      collected: 0,
+    };
+  }
+  return materialProgress;
 }
 
 /**
@@ -21,23 +81,15 @@ export function addItemToPlan(
   // 初期状態：最速パターン（results[0]）を選択
   const selectedResult = calculationResults[0];
 
-  // 原材料の進捗を初期化
-  const materialProgress: MaterialProgress = {};
-  for (const material of selectedResult.totalItems) {
-    materialProgress[material.item] = {
-      required: material.amount,
-      collected: 0,
-    };
-  }
-
   const newItem: ProductionPlanItem = {
+    kind: "item",
     id: generateId(),
     itemId,
     amount,
     selectedPatternIndex: 0,
     completed: false,
     calculationResults,
-    materialProgress,
+    materialProgress: createMaterialProgress(selectedResult.totalItems),
   };
 
   return {
@@ -46,20 +98,45 @@ export function addItemToPlan(
 }
 
 /**
- * 生産計画からアイテムを削除
+ * 生産計画にアップグレードを追加
+ * 存在しないアップグレード/レベルの場合は plan をそのまま返す
  */
-export function removeItemFromPlan(plan: ProductionPlan, itemId: string): ProductionPlan {
+export function addUpgradeToPlan(plan: ProductionPlan, upgradeId: string, level: number): ProductionPlan {
+  const upgradeLevel = getUpgradeLevel(upgradeId, level);
+  if (!upgradeLevel) return plan;
+
+  const requirements = resolveUpgradeRequirements(upgradeLevel.requirements);
+
+  const newEntry: ProductionPlanUpgrade = {
+    kind: "upgrade",
+    id: generateId(),
+    upgradeId,
+    level,
+    completed: false,
+    requirements,
+    materialProgress: createMaterialProgress(getUpgradeRequirementMaterials(requirements)),
+  };
+
   return {
-    items: plan.items.filter((item) => item.id !== itemId),
+    items: [...plan.items, newEntry],
   };
 }
 
 /**
- * アイテムの完了状態を切り替え
+ * 生産計画からエントリを削除
  */
-export function toggleItemCompletion(plan: ProductionPlan, itemId: string): ProductionPlan {
+export function removeItemFromPlan(plan: ProductionPlan, entryId: string): ProductionPlan {
   return {
-    items: plan.items.map((item) => (item.id === itemId ? { ...item, completed: !item.completed } : item)),
+    items: plan.items.filter((item) => item.id !== entryId),
+  };
+}
+
+/**
+ * エントリの完了状態を切り替え
+ */
+export function toggleItemCompletion(plan: ProductionPlan, entryId: string): ProductionPlan {
+  return {
+    items: plan.items.map((item) => (item.id === entryId ? { ...item, completed: !item.completed } : item)),
   };
 }
 
@@ -68,13 +145,13 @@ export function toggleItemCompletion(plan: ProductionPlan, itemId: string): Prod
  */
 export function updateMaterialProgress(
   plan: ProductionPlan,
-  itemId: string,
+  entryId: string,
   materialId: string,
   collected: number,
 ): ProductionPlan {
   return {
     items: plan.items.map((item) => {
-      if (item.id !== itemId) return item;
+      if (item.id !== entryId) return item;
 
       return {
         ...item,
@@ -91,17 +168,16 @@ export function updateMaterialProgress(
 }
 
 /**
- * 全アイテムの原材料を集計（完了済みを除く）
+ * 全エントリの原材料を集計（完了済みを除く）
  */
 export function aggregateMaterials(plan: ProductionPlan): ItemStack[] {
   const materialMap = new Map<string, number>();
 
-  for (const item of plan.items) {
-    if (item.completed) continue;
+  for (const entry of plan.items) {
+    if (entry.completed) continue;
 
-    const selectedResult = item.calculationResults[item.selectedPatternIndex];
-    for (const material of selectedResult.totalItems) {
-      const progress = item.materialProgress[material.item];
+    for (const material of getEntryMaterials(entry)) {
+      const progress = entry.materialProgress[material.item];
       const remaining = progress.required - progress.collected;
 
       if (remaining > 0) {

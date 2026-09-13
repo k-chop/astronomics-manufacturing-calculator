@@ -1,6 +1,20 @@
-import type { ProductionPlan } from "../types/production-plan";
+import type { ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 
 const STORAGE_KEY = "astronomics-production-plan";
+
+/**
+ * 保存済みデータを現在の形式に変換する
+ * kind が付く前に保存されたエントリはすべてアイテムなので kind: "item" を付与する
+ */
+export function migrateProductionPlan(raw: unknown): ProductionPlan {
+  if (typeof raw !== "object" || raw === null || !("items" in raw) || !Array.isArray(raw.items)) {
+    return { items: [] };
+  }
+  const items = raw.items.map((entry: ProductionPlanEntry | Omit<ProductionPlanEntry, "kind">) =>
+    "kind" in entry ? entry : ({ kind: "item", ...entry } as ProductionPlanEntry),
+  );
+  return { items };
+}
 
 /**
  * localStorageから生産計画を読み込む
@@ -11,7 +25,7 @@ export function loadProductionPlan(): ProductionPlan {
     if (!stored) {
       return { items: [] };
     }
-    return JSON.parse(stored) as ProductionPlan;
+    return migrateProductionPlan(JSON.parse(stored));
   } catch (error) {
     console.error("Failed to load production plan:", error);
     return { items: [] };

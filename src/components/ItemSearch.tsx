@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from "react";
 
-import { searchItems } from "../data/item-names";
+import type { Locale } from "../data/item-names";
+import { searchItems } from "../lib/item-search";
+import { RawMaterialIcon } from "./RawMaterialIcon";
 
 type ItemSearchProps = {
   onSelect: (itemId: string) => void;
-  locale?: string;
+  locale?: Locale;
   inputId?: string;
 };
 
@@ -73,14 +75,40 @@ export function ItemSearch({ onSelect, locale = "en", inputId }: ItemSearchProps
             <button
               type="button"
               key={result.id}
+              aria-label={result.name}
               onClick={() => handleSelect(result.id)}
               className={`w-full text-left px-4 py-2 cursor-pointer ${
                 index === selectedIndex ? "bg-blue-500 text-white" : "hover:bg-gray-100"
               }`}
             >
-              <div className="font-medium">{result.name}</div>
-              <div className={`text-sm ${index === selectedIndex ? "text-blue-100" : "text-gray-500"}`}>
-                {result.id}
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <div className="font-medium">{result.name}</div>
+                  <div className={`text-sm ${index === selectedIndex ? "text-blue-100" : "text-gray-500"}`}>
+                    {result.id}
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  {result.isRaw && (
+                    <span
+                      className={`flex items-center text-xs px-2 py-0.5 rounded ${
+                        index === selectedIndex ? "bg-blue-400 text-white" : "bg-green-100 text-green-700"
+                      }`}
+                    >
+                      <RawMaterialIcon />
+                      Raw
+                    </span>
+                  )}
+                  {!result.hasRecipe && (
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded ${
+                        index === selectedIndex ? "bg-blue-400 text-white" : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
+                      No recipe
+                    </span>
+                  )}
+                </div>
               </div>
             </button>
           ))}
