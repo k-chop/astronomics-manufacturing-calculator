@@ -21,6 +21,10 @@ const asteroids = {
   CV2: { name: "CV2", region: "ceresvesta", composition: "carbonite" },
   CV3: { name: "CV3", region: "ceresvesta", composition: "silicate" },
   CV4: { name: "CV4", region: "ceresvesta", composition: "metallic" },
+  NC1: { name: "NC1", region: "noblecoreag", composition: "carbonite" },
+  NC2: { name: "NC2", region: "noblecoreag", composition: "metallic" },
+  NC3: { name: "NC3", region: "noblecoreag", composition: "silicate" },
+  NC4: { name: "NC4", region: "noblecoreag", composition: "carbonite" },
 } as const;
 
 const regionNames = {
@@ -29,6 +33,7 @@ const regionNames = {
   twgems: { en: "TW Gems" },
   blacktidal: { en: "Black Tidal" },
   ceresvesta: { en: "Ceres Vesta" },
+  noblecoreag: { en: "Noblecore AG" },
 } as const;
 
 const compositionNames = {

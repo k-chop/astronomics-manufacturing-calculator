@@ -22,6 +22,7 @@ export const aliases: AliasMap = {
     "cracked-aquamarine",
     "cracked-opal",
     "cracked-citrine",
+    "diamond",
   ],
 };
 

@@ -38,4 +38,4 @@ pnpm build
 
 Recipe and item data is sourced from the [Official Astronomics Wiki](https://astronomics.wiki.gg).
 
-Compatible with Astronomics version 0.77.5.
+Compatible with Astronomics version 0.83.1.

@@ -39,11 +39,11 @@ export const rawMaterials: RawMaterialMap = {
   // Minerals
   amazonite: {
     id: "amazonite",
-    foundOn: ["MM3", "TW2", "TW3", "CV4"],
+    foundOn: ["MM3", "TW2", "CV4"],
   },
   bauxite: {
     id: "bauxite",
-    foundOn: ["BT3"],
+    foundOn: ["BT3", "NC4"],
   },
   calcite: {
     id: "calcite",
@@ -51,19 +51,19 @@ export const rawMaterials: RawMaterialMap = {
   },
   chromite: {
     id: "chromite",
-    foundOn: ["TW1"],
+    foundOn: ["TW1", "NC2"],
   },
   cobalt: {
     id: "cobalt",
-    foundOn: ["MM1", "TW3", "CV4"],
+    foundOn: ["MM1", "TW2", "CV4"],
   },
   copper: {
     id: "copper",
-    foundOn: ["CC2", "MM4", "BT2", "CV2"],
+    foundOn: ["CC2", "MM4", "BT2", "CV2", "NC1"],
   },
   diamond: {
     id: "diamond",
-    foundOn: ["BT4"],
+    foundOn: ["BT4", "NC4"],
   },
   galena: {
     id: "galena",
@@ -75,11 +75,11 @@ export const rawMaterials: RawMaterialMap = {
   },
   gypsum: {
     id: "gypsum",
-    foundOn: ["CC1", "CV2"],
+    foundOn: ["CC1", "CV2", "NC3"],
   },
   lodestone: {
     id: "lodestone",
-    foundOn: ["BT1", "CV1"],
+    foundOn: ["BT1", "CV1", "NC2"],
   },
   magnesite: {
     id: "magnesite",
@@ -87,11 +87,11 @@ export const rawMaterials: RawMaterialMap = {
   },
   nickel: {
     id: "nickel",
-    foundOn: ["CC1", "CC4", "MM2", "TW2", "BT2"],
+    foundOn: ["CC1", "CC4", "MM2", "TW2", "BT2", "NC2"],
   },
   obsidian: {
     id: "obsidian",
-    foundOn: ["BT3"],
+    foundOn: ["BT3", "NC1"],
   },
   platinum: {
     id: "platinum",
@@ -103,11 +103,15 @@ export const rawMaterials: RawMaterialMap = {
   },
   salt: {
     id: "salt",
-    foundOn: ["MM3", "TW3", "BT1"],
+    foundOn: ["MM3", "TW3", "BT1", "NC3"],
   },
   silver: {
     id: "silver",
     foundOn: ["CC4", "MM4", "TW1", "BT2", "CV1"],
+  },
+  sulfur: {
+    id: "sulfur",
+    foundOn: ["NC3"],
   },
 
   // Gems (Flawless)
@@ -173,11 +177,11 @@ export const rawMaterials: RawMaterialMap = {
   // Liquids
   acid: {
     id: "acid",
-    foundOn: ["BT3"],
+    foundOn: ["BT3", "NC3"],
   },
   brine: {
     id: "brine",
-    foundOn: ["CC4", "BT1"],
+    foundOn: ["CC4", "BT1", "NC3"],
   },
   mercury: {
     id: "mercury",
@@ -189,25 +193,51 @@ export const rawMaterials: RawMaterialMap = {
   },
   petroleum: {
     id: "petroleum",
-    foundOn: ["BT4"],
+    foundOn: ["BT4", "NC4"],
   },
   water: {
     id: "water",
     foundOn: ["CC4", "CV3"],
   },
 
+  // Gases
+  "argon-gas": {
+    id: "argon-gas",
+    foundOn: ["MM2", "CV1"],
+  },
+  "chlorine-gas": {
+    id: "chlorine-gas",
+    foundOn: ["CV3", "NC3"],
+  },
+  "helium-gas": {
+    id: "helium-gas",
+    foundOn: ["NC1"],
+  },
+  "hydrogen-gas": {
+    id: "hydrogen-gas",
+    foundOn: ["NC3"],
+  },
+  "nitrogen-gas": {
+    id: "nitrogen-gas",
+    foundOn: ["CC2", "MM2", "CV4", "NC2"],
+  },
+  "oxygen-gas": {
+    id: "oxygen-gas",
+    foundOn: ["CC3", "TW3", "TW4", "NC4"],
+  },
+
   // Data Resources - Composition
   "carbonite-asteroid-data": {
     id: "carbonite-asteroid-data",
-    foundOn: ["CC1", "CC3", "MM2", "TW1", "TW2", "BT4", "CV2"],
+    foundOn: ["CC1", "CC3", "MM2", "TW1", "TW2", "BT4", "CV2", "NC1", "NC4"],
   },
   "metallic-asteroid-data": {
     id: "metallic-asteroid-data",
-    foundOn: ["CC4", "MM1", "MM3", "BT2", "CV4"],
+    foundOn: ["CC4", "MM1", "MM3", "BT2", "CV4", "NC2"],
   },
   "silicate-asteroid-data": {
     id: "silicate-asteroid-data",
-    foundOn: ["CC2", "MM4", "TW3", "TW4", "BT1", "BT3", "CV1", "CV3"],
+    foundOn: ["CC2", "MM4", "TW3", "TW4", "BT1", "BT3", "CV1", "CV3", "NC3"],
   },
 
   // Data Resources - Phenomenon

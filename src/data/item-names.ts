@@ -40,6 +40,7 @@ export const itemNames: ItemNamesMap = {
   rutile: { en: "Rutile" },
   salt: { en: "Salt" },
   silver: { en: "Silver" },
+  sulfur: { en: "Sulfur" },
 
   // Raw Materials - Gems (Flawless)
   aquamarine: { en: "Aquamarine" },
@@ -67,6 +68,14 @@ export const itemNames: ItemNamesMap = {
   petroleum: { en: "Petroleum" },
   water: { en: "Water" },
 
+  // Raw Materials - Gases
+  "argon-gas": { en: "Argon Gas" },
+  "chlorine-gas": { en: "Chlorine Gas" },
+  "helium-gas": { en: "Helium Gas" },
+  "hydrogen-gas": { en: "Hydrogen Gas" },
+  "nitrogen-gas": { en: "Nitrogen Gas" },
+  "oxygen-gas": { en: "Oxygen Gas" },
+
   // Raw Materials - Data
   "carbonite-asteroid-data": { en: "Carbonite Asteroid Data" },
   "metallic-asteroid-data": { en: "Metallic Asteroid Data" },
@@ -93,6 +102,11 @@ export const itemNames: ItemNamesMap = {
   "magnetic-dust": { en: "Magnetic Dust" },
   "bauxite-dust": { en: "Bauxite Dust" },
   "gem-dust": { en: "Gem Dust" },
+  "quantum-data-drives": { en: "Quantum Data Drives" },
+  "holo-display-screens": { en: "Holo Display Screens" },
+  "magnetic-clamps": { en: "Magnetic Clamps" },
+  "thermic-explosives": { en: "Thermic Explosives" },
+  "superconductor-coils": { en: "Superconductor Coils" },
 
   // Research
   "asteroid-research": { en: "Asteroid Research" },

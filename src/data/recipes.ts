@@ -217,6 +217,68 @@ export const recipes: RecipeMap = {
     },
   ],
 
+  // Constructor
+  "quantum-data-drives": [
+    {
+      inputs: [
+        { item: "helium-gas", amount: 25 },
+        { item: "graphite", amount: 50 },
+        { item: "fiber-optic-strands", amount: 50 },
+      ],
+      amount: 85,
+      machine: "constructor",
+      duration: 120,
+    },
+  ],
+  "holo-display-screens": [
+    {
+      inputs: [
+        { item: "nitrogen-gas", amount: 50 },
+        { item: "polymers", amount: 40 },
+        { item: "glass-sheet", amount: 75 },
+      ],
+      amount: 90,
+      machine: "constructor",
+      duration: 120,
+    },
+  ],
+  "magnetic-clamps": [
+    {
+      inputs: [
+        { item: "hydrogen-gas", amount: 65 },
+        { item: "magnetic-dust", amount: 25 },
+        { item: "steel-rods", amount: 75 },
+      ],
+      amount: 75,
+      machine: "constructor",
+      duration: 120,
+    },
+  ],
+  "thermic-explosives": [
+    {
+      inputs: [
+        { item: "chlorine-gas", amount: 70 },
+        { item: "bauxite-dust", amount: 25 },
+        { item: "gem-dust", amount: 100 },
+      ],
+      amount: 70,
+      machine: "constructor",
+      duration: 120,
+    },
+  ],
+  "superconductor-coils": [
+    {
+      inputs: [
+        { item: "oxygen-gas", amount: 100 },
+        { item: "copper-wire", amount: 60 },
+        { item: "plastics", amount: 60 },
+      ],
+      amount: 110,
+      machine: "constructor",
+      duration: 120,
+    },
+  ],
+
   // Computer
   "asteroid-research": [
     {
