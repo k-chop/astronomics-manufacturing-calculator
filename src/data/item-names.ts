@@ -73,6 +73,7 @@ export const itemNames: ItemNamesMap = {
   "chlorine-gas": { en: "Chlorine Gas" },
   "helium-gas": { en: "Helium Gas" },
   "hydrogen-gas": { en: "Hydrogen Gas" },
+  "neon-gas": { en: "Neon Gas" },
   "nitrogen-gas": { en: "Nitrogen Gas" },
   "oxygen-gas": { en: "Oxygen Gas" },
 

@@ -48,6 +48,15 @@ export const genericAsteroidNames = {
   "metallic-asteroids": { en: "Metallic Asteroids" },
   "silicate-asteroids": { en: "Silicate Asteroids" },
   any: { en: "Any Asteroid" },
+
+  // Gas nebulae (on the map, not on asteroids)
+  "argon-gas-nebula": { en: "Argon Gas Nebula" },
+  "chlorine-gas-nebula": { en: "Chlorine Gas Nebula" },
+  "helium-gas-nebula": { en: "Helium Gas Nebula" },
+  "hydrogen-gas-nebula": { en: "Hydrogen Gas Nebula" },
+  "neon-gas-nebula": { en: "Neon Gas Nebula" },
+  "nitrogen-gas-nebula": { en: "Nitrogen Gas Nebula" },
+  "oxygen-gas-nebula": { en: "Oxygen Gas Nebula" },
 } satisfies {
   [asteroidId: string]: {
     en: string;

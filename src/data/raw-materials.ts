@@ -203,27 +203,31 @@ export const rawMaterials: RawMaterialMap = {
   // Gases
   "argon-gas": {
     id: "argon-gas",
-    foundOn: ["MM2", "CV1"],
+    foundOn: ["MM2", "CV1", "argon-gas-nebula"],
   },
   "chlorine-gas": {
     id: "chlorine-gas",
-    foundOn: ["CV3", "NC3"],
+    foundOn: ["CV3", "NC3", "chlorine-gas-nebula"],
   },
   "helium-gas": {
     id: "helium-gas",
-    foundOn: ["NC1"],
+    foundOn: ["NC1", "helium-gas-nebula"],
   },
   "hydrogen-gas": {
     id: "hydrogen-gas",
-    foundOn: ["NC3"],
+    foundOn: ["NC3", "hydrogen-gas-nebula"],
+  },
+  "neon-gas": {
+    id: "neon-gas",
+    foundOn: ["neon-gas-nebula"],
   },
   "nitrogen-gas": {
     id: "nitrogen-gas",
-    foundOn: ["CC2", "MM2", "CV4", "NC2"],
+    foundOn: ["CC2", "MM2", "CV4", "NC2", "nitrogen-gas-nebula"],
   },
   "oxygen-gas": {
     id: "oxygen-gas",
-    foundOn: ["CC3", "TW3", "TW4", "NC4"],
+    foundOn: ["CC3", "TW3", "TW4", "NC4", "oxygen-gas-nebula"],
   },
 
   // Data Resources - Composition
