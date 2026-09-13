@@ -1,7 +1,8 @@
 import type { Locale } from "../data/item-names";
 import { formatNumber } from "../lib/format-utils";
-import { formatItemStacks, getEntryTitle } from "../lib/plan-format";
+import { getEntryTitle } from "../lib/plan-format";
 import type { InventoryRow, ReadyCraft } from "../lib/production-plan-utils";
+import { formatItemStacks } from "../lib/recipe-format";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type InventoryPanelProps = {

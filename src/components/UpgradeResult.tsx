@@ -1,7 +1,9 @@
-import { getItemName, type Locale } from "../data/item-names";
+import type { Locale } from "../data/item-names";
 import { getUpgradeLevel, getUpgradeName } from "../data/upgrades";
 import { formatNumber } from "../lib/format-utils";
 import { getUpgradeRequirementMaterials, resolveUpgradeRequirements } from "../lib/production-plan-utils";
+import { formatItemStacks } from "../lib/recipe-format";
+import { AddToPlanButton } from "./AddToPlanButton";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type UpgradeResultProps = {
@@ -28,16 +30,7 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
             </div>
             <div className="text-sm text-gray-600">{formatNumber(upgradeLevel.credits)}◆</div>
           </div>
-          <button
-            type="button"
-            onClick={onAddToPlan}
-            className="flex flex-col items-end gap-1 px-5 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md shrink-0 text-right"
-          >
-            <span className="font-medium leading-none">Add to Plan</span>
-            <span className="text-xs text-purple-200 leading-none">
-              {getUpgradeName(upgradeId, locale)} Lv{level}
-            </span>
-          </button>
+          <AddToPlanButton subtitle={`${getUpgradeName(upgradeId, locale)} Lv${level}`} onClick={onAddToPlan} />
         </div>
 
         {/* Requirements */}
@@ -54,10 +47,7 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
                 </div>
                 {requirement.calculationResults !== null && (
                   <div className="mt-1 text-xs text-gray-500">
-                    →{" "}
-                    {requirement.calculationResults[0].totalItems
-                      .map((material) => `${getItemName(material.item, locale)} × ${formatNumber(material.amount)}`)
-                      .join(", ")}
+                    → {formatItemStacks(requirement.calculationResults[0].totalItems, locale, ", ")}
                   </div>
                 )}
               </div>

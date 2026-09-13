@@ -2,6 +2,7 @@ import { getItemName, type Locale } from "../data/item-names";
 import { getMachineName } from "../data/machines";
 import { type CalculationResult, getRecipeKey, getResultKey } from "../lib/calculator";
 import { formatDuration, formatNumber } from "../lib/format-utils";
+import { AddToPlanButton } from "./AddToPlanButton";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
 type ManufacturingResultProps = {
@@ -13,6 +14,16 @@ type ManufacturingResultProps = {
   onAddToPlan: (patternIndex: number) => void;
   locale?: Locale;
 };
+
+const amountButtonClass = "px-3 py-2 text-white rounded-lg focus:outline-none focus:ring-2 text-sm font-medium";
+
+const amountAdjusters: Array<{ label: string; apply: (amount: number) => number; className: string }> = [
+  { label: "+1", apply: (amount) => amount + 1, className: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500" },
+  { label: "+5", apply: (amount) => amount + 5, className: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-500" },
+  { label: "x2", apply: (amount) => amount * 2, className: "bg-green-500 hover:bg-green-600 focus:ring-green-500" },
+  { label: "x5", apply: (amount) => amount * 5, className: "bg-green-500 hover:bg-green-600 focus:ring-green-500" },
+  { label: "x10", apply: (amount) => amount * 10, className: "bg-green-500 hover:bg-green-600 focus:ring-green-500" },
+];
 
 export function ManufacturingResult({
   results,
@@ -36,45 +47,20 @@ export function ManufacturingResult({
             className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => onAmountChange(targetAmount + 1)}
-              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-            >
-              +1
-            </button>
-            <button
-              type="button"
-              onClick={() => onAmountChange(targetAmount + 5)}
-              className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-            >
-              +5
-            </button>
-            <button
-              type="button"
-              onClick={() => onAmountChange(targetAmount * 2)}
-              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-            >
-              x2
-            </button>
-            <button
-              type="button"
-              onClick={() => onAmountChange(targetAmount * 5)}
-              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-            >
-              x5
-            </button>
-            <button
-              type="button"
-              onClick={() => onAmountChange(targetAmount * 10)}
-              className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm font-medium"
-            >
-              x10
-            </button>
+            {amountAdjusters.map((adjuster) => (
+              <button
+                key={adjuster.label}
+                type="button"
+                onClick={() => onAmountChange(adjuster.apply(targetAmount))}
+                className={`${amountButtonClass} ${adjuster.className}`}
+              >
+                {adjuster.label}
+              </button>
+            ))}
             <button
               type="button"
               onClick={onReset}
-              className="px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 text-sm font-medium"
+              className={`${amountButtonClass} bg-gray-500 hover:bg-gray-600 focus:ring-gray-500`}
             >
               reset
             </button>
@@ -89,16 +75,10 @@ export function ManufacturingResult({
               <div className="text-sm text-gray-600">Pattern {patternIndex + 1}</div>
               <div className="text-xl font-bold text-blue-600">Total Time: {formatDuration(result.totalDuration)}</div>
             </div>
-            <button
-              type="button"
+            <AddToPlanButton
+              subtitle={`${formatNumber(targetAmount)} × ${getItemName(targetItem, locale)}`}
               onClick={() => onAddToPlan(patternIndex)}
-              className="flex flex-col items-end gap-1 px-5 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-md shrink-0 text-right"
-            >
-              <span className="font-medium leading-none">Add to Plan</span>
-              <span className="text-xs text-purple-200 leading-none">
-                {formatNumber(targetAmount)} × {getItemName(targetItem, locale)}
-              </span>
-            </button>
+            />
           </div>
 
           {/* Required Raw Materials */}

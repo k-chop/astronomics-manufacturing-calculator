@@ -1,8 +1,8 @@
 import { getItemName, type Locale } from "../data/item-names";
-import { getMachineName } from "../data/machines";
 import { getUpgradeName } from "../data/upgrades";
 import { formatDuration, formatNumber } from "../lib/format-utils";
 import { findRecipesUsingItem, findUpgradesRequiringItem } from "../lib/item-usage";
+import { formatRecipe } from "../lib/recipe-format";
 
 type ItemUsageProps = {
   itemId: string;
@@ -44,12 +44,15 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
                   )}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  {getMachineName(usage.method.machine, locale)}:{" "}
-                  {usage.method.inputs
-                    .map((input) => `${getItemName(input.item, locale)} ×${formatNumber(input.amount)}`)
-                    .join(" + ")}{" "}
-                  → {getItemName(usage.outputItem, locale)} ×{formatNumber(usage.method.amount)} (
-                  {formatDuration(usage.method.duration)})
+                  {formatRecipe(
+                    {
+                      machine: usage.method.machine,
+                      inputs: usage.method.inputs,
+                      outputs: [{ item: usage.outputItem, amount: usage.method.amount }],
+                    },
+                    locale,
+                  )}{" "}
+                  ({formatDuration(usage.method.duration)})
                 </div>
               </button>
             ))}

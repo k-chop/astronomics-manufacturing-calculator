@@ -4,8 +4,8 @@ import { getItemName, type Locale } from "../data/item-names";
 import { getUpgradeName } from "../data/upgrades";
 import { getRecipeKey } from "../lib/calculator";
 import { formatDuration, formatNumber } from "../lib/format-utils";
-import { formatRecipe } from "../lib/plan-format";
 import { type EntryAnalysis, isMaterialsCovered, type PlanAnalysis } from "../lib/production-plan-utils";
+import { formatRecipe } from "../lib/recipe-format";
 import type { Inventory, ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
 
