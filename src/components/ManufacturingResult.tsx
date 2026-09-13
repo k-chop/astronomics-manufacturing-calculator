@@ -1,4 +1,5 @@
 import { getItemName, type Locale } from "../data/item-names";
+import { getMachineName } from "../data/machines";
 import { type CalculationResult, getRecipeKey, getResultKey } from "../lib/calculator";
 import { formatDuration } from "../lib/format-utils";
 import { ItemWithTooltip } from "./ItemWithTooltip";
@@ -117,9 +118,7 @@ export function ManufacturingResult({
               {result.recipes.map((recipe) => (
                 <div key={getRecipeKey(recipe)} className="border border-gray-200 rounded p-3 bg-gray-50">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="font-medium text-blue-700">
-                      {recipe.machine.charAt(0).toUpperCase() + recipe.machine.slice(1)}
-                    </div>
+                    <div className="font-medium text-blue-700">{getMachineName(recipe.machine, locale)}</div>
                     <div className="text-sm text-gray-600">
                       {formatDuration(recipe.duration)} × {recipe.count} ={" "}
                       {formatDuration(recipe.duration * recipe.count)}

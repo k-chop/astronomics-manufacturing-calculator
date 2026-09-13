@@ -1,4 +1,5 @@
 import { getItemName, type Locale } from "../data/item-names";
+import { getMachineName } from "../data/machines";
 import { getUpgradeName } from "../data/upgrades";
 import { formatDuration } from "../lib/format-utils";
 import { findRecipesUsingItem, findUpgradesRequiringItem } from "../lib/item-usage";
@@ -43,7 +44,7 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
                   )}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  {usage.method.machine.charAt(0).toUpperCase() + usage.method.machine.slice(1)}:{" "}
+                  {getMachineName(usage.method.machine, locale)}:{" "}
                   {usage.method.inputs
                     .map((input) => `${getItemName(input.item, locale)} ×${input.amount}`)
                     .join(" + ")}{" "}

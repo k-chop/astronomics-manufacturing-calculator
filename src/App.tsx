@@ -1,15 +1,15 @@
-import { useId, useState } from "react";
+import { useState } from "react";
 
+import { CatalogTree } from "./components/CatalogTree";
 import { GitHubIcon } from "./components/GitHubIcon";
-import { ItemSearch } from "./components/ItemSearch";
 import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { MaterialsSummary } from "./components/MaterialsSummary";
 import { ProductionPlanList } from "./components/ProductionPlanList";
 import { UpgradeResult } from "./components/UpgradeResult";
-import { type SelectedUpgrade, UpgradeSelector } from "./components/UpgradeSelector";
 import type { CalculationResult } from "./lib/calculator";
 import { calculateManufacturing } from "./lib/calculator";
+import { getSelectionId, type Selection } from "./lib/catalog-tree";
 import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-storage";
 import {
   addItemToPlan,
@@ -23,15 +23,13 @@ import { getMinimumAmount } from "./lib/recipe-utils";
 import type { ProductionPlan } from "./types/production-plan";
 
 export const App = () => {
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selection, setSelection] = useState<Selection | null>(null);
   const [amount, setAmount] = useState<number>(1);
   const [results, setResults] = useState<CalculationResult[] | null>(null);
-  const [selectedUpgrade, setSelectedUpgrade] = useState<SelectedUpgrade | null>(null);
   const [productionPlan, setProductionPlan] = useState<ProductionPlan>(() => {
     // 初期値としてlocalStorageから読み込む
     return loadProductionPlan();
   });
-  const itemSearchId = useId();
 
   // 計画の更新時にlocalStorageへ保存する
   const updateProductionPlan = (newPlan: ProductionPlan) => {
@@ -39,64 +37,59 @@ export const App = () => {
     saveProductionPlan(newPlan);
   };
 
-  const handleItemSelect = (itemId: string) => {
-    const minAmount = getMinimumAmount(itemId);
-    setSelectedUpgrade(null);
-    setSelectedItem(itemId);
-    setAmount(minAmount);
-    const calculationResults = calculateManufacturing(itemId, minAmount);
-    setResults(calculationResults);
+  const handleSelect = (newSelection: Selection) => {
+    setSelection(newSelection);
+    if (newSelection.kind === "item") {
+      const minAmount = getMinimumAmount(newSelection.itemId);
+      setAmount(minAmount);
+      setResults(calculateManufacturing(newSelection.itemId, minAmount));
+    } else {
+      setResults(null);
+    }
   };
 
-  const handleUpgradeSelect = (upgradeId: string, level: number) => {
-    setSelectedItem(null);
-    setResults(null);
-    setSelectedUpgrade({ upgradeId, level });
-  };
+  const handleItemSelect = (itemId: string) => handleSelect({ kind: "item", itemId });
+  const handleUpgradeSelect = (upgradeId: string, level: number) => handleSelect({ kind: "upgrade", upgradeId, level });
+
+  const selectedItem = selection?.kind === "item" ? selection.itemId : null;
+  const selectedUpgrade = selection?.kind === "upgrade" ? selection : null;
 
   const handleAmountChange = (newAmount: number) => {
     const validAmount = Math.max(1, newAmount);
     setAmount(validAmount);
     if (selectedItem) {
-      const calculationResults = calculateManufacturing(selectedItem, validAmount);
-      setResults(calculationResults);
+      setResults(calculateManufacturing(selectedItem, validAmount));
     }
   };
 
   const handleReset = () => {
     if (selectedItem) {
-      const minAmount = getMinimumAmount(selectedItem);
-      handleAmountChange(minAmount);
+      handleAmountChange(getMinimumAmount(selectedItem));
     }
   };
 
   const handleAddToPlan = () => {
     if (selectedItem && results && results.length > 0) {
-      const newPlan = addItemToPlan(productionPlan, selectedItem, amount, results);
-      updateProductionPlan(newPlan);
+      updateProductionPlan(addItemToPlan(productionPlan, selectedItem, amount, results));
     }
   };
 
   const handleAddUpgradeToPlan = () => {
     if (selectedUpgrade) {
-      const newPlan = addUpgradeToPlan(productionPlan, selectedUpgrade.upgradeId, selectedUpgrade.level);
-      updateProductionPlan(newPlan);
+      updateProductionPlan(addUpgradeToPlan(productionPlan, selectedUpgrade.upgradeId, selectedUpgrade.level));
     }
   };
 
-  const handleRemoveFromPlan = (itemId: string) => {
-    const newPlan = removeItemFromPlan(productionPlan, itemId);
-    updateProductionPlan(newPlan);
+  const handleRemoveFromPlan = (entryId: string) => {
+    updateProductionPlan(removeItemFromPlan(productionPlan, entryId));
   };
 
-  const handleToggleCompletion = (itemId: string) => {
-    const newPlan = toggleItemCompletion(productionPlan, itemId);
-    updateProductionPlan(newPlan);
+  const handleToggleCompletion = (entryId: string) => {
+    updateProductionPlan(toggleItemCompletion(productionPlan, entryId));
   };
 
-  const handleUpdateMaterialProgress = (itemId: string, materialId: string, collected: number) => {
-    const newPlan = updateMaterialProgress(productionPlan, itemId, materialId, collected);
-    updateProductionPlan(newPlan);
+  const handleUpdateMaterialProgress = (entryId: string, materialId: string, collected: number) => {
+    updateProductionPlan(updateMaterialProgress(productionPlan, entryId, materialId, collected));
   };
 
   return (
@@ -115,20 +108,20 @@ export const App = () => {
           </a>
         </div>
 
-        {/* 2-column layout: Left (Calculator) + Right (Production Plan) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column: Calculator */}
-          <div className="space-y-8">
-            {/* Select Item */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
-                What do you want to make?
-              </label>
-              <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
-            </div>
+        {/* 3-column layout: Left (Catalog) + Center (Details) + Right (Production Plan) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_minmax(0,1fr)] gap-6">
+          {/* Left Column: Catalog Tree */}
+          <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-scroll">
+            <CatalogTree selectedId={selection ? getSelectionId(selection) : null} onSelect={handleSelect} />
+          </div>
 
-            {/* Select Upgrade */}
-            <UpgradeSelector selected={selectedUpgrade} onSelect={handleUpgradeSelect} />
+          {/* Center Column: Details */}
+          <div className="space-y-6">
+            {selection === null && (
+              <div className="bg-white rounded-lg shadow-md p-6 text-gray-500 text-sm">
+                Select an item or upgrade from the list.
+              </div>
+            )}
 
             {/* Upgrade Requirements */}
             {selectedUpgrade && (
@@ -166,7 +159,7 @@ export const App = () => {
           </div>
 
           {/* Right Column: Production Plan */}
-          <div className="space-y-8">
+          <div className="space-y-6">
             {/* Total Materials Summary */}
             {productionPlan.items.length > 0 && <MaterialsSummary materials={aggregateMaterials(productionPlan)} />}
 

@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* スクロールバーの有無でレイアウトがずれないように常に表示する */
+html {
+  overflow-y: scroll;
+}
+
+/* Tailwind v4 では button の cursor が既定で pointer ではないので、v3 と同じ挙動に戻す */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
 @layer utilities {
   .sr-only {
     position: absolute;
