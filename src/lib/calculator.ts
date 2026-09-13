@@ -150,6 +150,6 @@ export function calculateManufacturing(
   }
 
   return results.length > 0
-    ? results.sort((a, b) => a.totalDuration - b.totalDuration)
+    ? results.toSorted((a, b) => a.totalDuration - b.totalDuration)
     : null;
 }

@@ -22,7 +22,6 @@ export function ManufacturingResult({
   onAddToPlan,
   locale = "en",
 }: ManufacturingResultProps) {
-
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
@@ -99,7 +98,9 @@ export function ManufacturingResult({
           className="border border-gray-300 rounded-lg p-4 bg-white shadow"
         >
           <div className="mb-3 pb-3 border-b border-gray-200">
-            <div className="text-sm text-gray-600">Pattern {patternIndex + 1}</div>
+            <div className="text-sm text-gray-600">
+              Pattern {patternIndex + 1}
+            </div>
             <div className="text-xl font-bold text-blue-600">
               Total Time: {formatDuration(result.totalDuration)}
             </div>
@@ -135,7 +136,8 @@ export function ManufacturingResult({
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium text-blue-700">
-                      {recipe.machine.charAt(0).toUpperCase() + recipe.machine.slice(1)}
+                      {recipe.machine.charAt(0).toUpperCase() +
+                        recipe.machine.slice(1)}
                     </div>
                     <div className="text-sm text-gray-600">
                       {formatDuration(recipe.duration)} × {recipe.count} ={" "}
@@ -148,7 +150,10 @@ export function ManufacturingResult({
                     <div className="space-y-1">
                       {recipe.inputs.map((input) => (
                         <div key={input.item} className="text-gray-700">
-                          <ItemWithTooltip itemId={input.item} locale={locale} />
+                          <ItemWithTooltip
+                            itemId={input.item}
+                            locale={locale}
+                          />
                           <span className="font-mono text-xs ml-1">
                             × {input.amount}
                           </span>
@@ -165,7 +170,10 @@ export function ManufacturingResult({
                     {/* Outputs */}
                     <div className="space-y-1">
                       {recipe.outputs.map((output) => (
-                        <div key={output.item} className="text-gray-700 font-medium">
+                        <div
+                          key={output.item}
+                          className="text-gray-700 font-medium"
+                        >
                           {getItemName(output.item, locale)}
                           <span className="font-mono text-xs ml-1">
                             × {output.amount}

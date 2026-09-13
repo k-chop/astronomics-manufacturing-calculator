@@ -65,6 +65,10 @@ export function getAsteroidInfo(
       compositon: compositionNames[a.composition][locale],
     };
   } else {
-    return { name: genericAsteroidNames[asteroidId as keyof typeof genericAsteroidNames][locale] };
+    return {
+      name: genericAsteroidNames[
+        asteroidId as keyof typeof genericAsteroidNames
+      ][locale],
+    };
   }
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import { getItemName, type Locale } from "../data/item-names";
 import type { ProductionPlan } from "../types/production-plan";
 import { ItemWithTooltip } from "./ItemWithTooltip";
@@ -38,7 +39,9 @@ export function ProductionPlanList({
   if (plan.items.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
+        <h2 className="text-xl font-bold mb-4 text-gray-900">
+          Production Plan
+        </h2>
         <p className="text-gray-500 text-sm">
           No items in the plan yet. Add items from the calculator on the left.
         </p>
@@ -51,7 +54,8 @@ export function ProductionPlanList({
       <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
       <div className="space-y-3">
         {plan.items.map((item) => {
-          const selectedResult = item.calculationResults[item.selectedPatternIndex];
+          const selectedResult =
+            item.calculationResults[item.selectedPatternIndex];
           const totalMaterials = selectedResult.totalItems.length;
           const collectedCount = Object.values(item.materialProgress).filter(
             (p) => p.collected >= p.required,
@@ -85,7 +89,9 @@ export function ProductionPlanList({
                   <div className="flex-1">
                     <div
                       className={`font-semibold text-lg ${
-                        item.completed ? "line-through text-gray-500" : "text-gray-900"
+                        item.completed
+                          ? "line-through text-gray-500"
+                          : "text-gray-900"
                       }`}
                     >
                       {item.amount} × {getItemName(item.itemId, locale)}
@@ -126,7 +132,8 @@ export function ProductionPlanList({
                   <div className="space-y-2">
                     {selectedResult.totalItems.map((material) => {
                       const progress = item.materialProgress[material.item];
-                      const isComplete = progress.collected >= progress.required;
+                      const isComplete =
+                        progress.collected >= progress.required;
 
                       return (
                         <div
@@ -151,7 +158,9 @@ export function ProductionPlanList({
                             <ItemWithTooltip
                               itemId={material.item}
                               locale={locale}
-                              className={isComplete ? "line-through text-gray-500" : ""}
+                              className={
+                                isComplete ? "line-through text-gray-500" : ""
+                              }
                             />
                           </div>
                           <div className="flex items-center gap-2">

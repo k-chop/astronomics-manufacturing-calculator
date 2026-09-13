@@ -4,13 +4,11 @@ This is a handy tool for [Astronomics](https://store.steampowered.com/app/197552
 
 Enter what you want to craft, and it will calculate where to gather the raw materials, which machines to use, and how many of each item you need.
 
-
 This application was created with $30 worth of Anthropic credits with Claude Code lol
 
 ## 🚀 Try it here!
 
 **https://astronomics-manufacturing-calculator.pages.dev**
-
 
 ## Features
 

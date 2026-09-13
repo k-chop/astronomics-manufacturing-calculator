@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
+
 import { GitHubIcon } from "./components/GitHubIcon";
 import { ItemSearch } from "./components/ItemSearch";
 import { ManufacturingResult } from "./components/ManufacturingResult";
@@ -28,20 +29,13 @@ export const App = () => {
     // 初期値としてlocalStorageから読み込む
     return loadProductionPlan();
   });
-  const [isInitialized, setIsInitialized] = useState(false);
   const itemSearchId = useId();
 
-  // 初期化完了フラグ
-  useEffect(() => {
-    setIsInitialized(true);
-  }, []);
-
-  // 計画が変更されたらlocalStorageに保存（初回は除く）
-  useEffect(() => {
-    if (isInitialized) {
-      saveProductionPlan(productionPlan);
-    }
-  }, [productionPlan, isInitialized]);
+  // 計画の更新時にlocalStorageへ保存する
+  const updateProductionPlan = (newPlan: ProductionPlan) => {
+    setProductionPlan(newPlan);
+    saveProductionPlan(newPlan);
+  };
 
   const handleItemSelect = (itemId: string) => {
     const minAmount = getMinimumAmount(itemId);
@@ -55,7 +49,10 @@ export const App = () => {
     const validAmount = Math.max(1, newAmount);
     setAmount(validAmount);
     if (selectedItem) {
-      const calculationResults = calculateManufacturing(selectedItem, validAmount);
+      const calculationResults = calculateManufacturing(
+        selectedItem,
+        validAmount,
+      );
       setResults(calculationResults);
     }
   };
@@ -69,19 +66,24 @@ export const App = () => {
 
   const handleAddToPlan = () => {
     if (selectedItem && results && results.length > 0) {
-      const newPlan = addItemToPlan(productionPlan, selectedItem, amount, results);
-      setProductionPlan(newPlan);
+      const newPlan = addItemToPlan(
+        productionPlan,
+        selectedItem,
+        amount,
+        results,
+      );
+      updateProductionPlan(newPlan);
     }
   };
 
   const handleRemoveFromPlan = (itemId: string) => {
     const newPlan = removeItemFromPlan(productionPlan, itemId);
-    setProductionPlan(newPlan);
+    updateProductionPlan(newPlan);
   };
 
   const handleToggleCompletion = (itemId: string) => {
     const newPlan = toggleItemCompletion(productionPlan, itemId);
-    setProductionPlan(newPlan);
+    updateProductionPlan(newPlan);
   };
 
   const handleUpdateMaterialProgress = (
@@ -95,7 +97,7 @@ export const App = () => {
       materialId,
       collected,
     );
-    setProductionPlan(newPlan);
+    updateProductionPlan(newPlan);
   };
 
   return (
@@ -122,7 +124,10 @@ export const App = () => {
           <div className="space-y-8">
             {/* Select Item */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <label htmlFor={itemSearchId} className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor={itemSearchId}
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Select Item
               </label>
               <ItemSearch onSelect={handleItemSelect} inputId={itemSearchId} />
@@ -142,7 +147,8 @@ export const App = () => {
 
             {results === null && selectedItem && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-800">
-                No manufacturing recipe found for this item. It may only be available as a raw material.
+                No manufacturing recipe found for this item. It may only be
+                available as a raw material.
               </div>
             )}
           </div>
@@ -151,7 +157,9 @@ export const App = () => {
           <div className="space-y-8">
             {/* Total Materials Summary */}
             {productionPlan.items.length > 0 && (
-              <MaterialsSummary materials={aggregateMaterials(productionPlan)} />
+              <MaterialsSummary
+                materials={aggregateMaterials(productionPlan)}
+              />
             )}
 
             {/* Production Plan List */}

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+
 import { searchItems } from "../data/item-names";
 
 type ItemSearchProps = {
@@ -7,26 +8,26 @@ type ItemSearchProps = {
   inputId?: string;
 };
 
-export function ItemSearch({ onSelect, locale = "en", inputId }: ItemSearchProps) {
+export function ItemSearch({
+  onSelect,
+  locale = "en",
+  inputId,
+}: ItemSearchProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Array<{ id: string; name: string }>>(
-    [],
-  );
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (query.trim()) {
-      const searchResults = searchItems(query, locale);
-      setResults(searchResults);
-      setIsOpen(searchResults.length > 0);
-      setSelectedIndex(0);
-    } else {
-      setResults([]);
-      setIsOpen(false);
-    }
-  }, [query, locale]);
+  const results = useMemo(
+    () => (query.trim() ? searchItems(query, locale) : []),
+    [query, locale],
+  );
+
+  const handleQueryChange = (newQuery: string) => {
+    setQuery(newQuery);
+    setIsOpen(true);
+    setSelectedIndex(0);
+  };
 
   const handleSelect = (itemId: string) => {
     onSelect(itemId);
@@ -45,7 +46,9 @@ export function ItemSearch({ onSelect, locale = "en", inputId }: ItemSearchProps
         break;
       case "ArrowUp":
         e.preventDefault();
-        setSelectedIndex((prev) => (prev - 1 + results.length) % results.length);
+        setSelectedIndex(
+          (prev) => (prev - 1 + results.length) % results.length,
+        );
         break;
       case "Enter":
         e.preventDefault();
@@ -67,7 +70,7 @@ export function ItemSearch({ onSelect, locale = "en", inputId }: ItemSearchProps
         id={inputId}
         type="text"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => handleQueryChange(e.target.value)}
         onKeyDown={handleKeyDown}
         onFocus={() => query.trim() && setIsOpen(true)}
         placeholder="Search items..."

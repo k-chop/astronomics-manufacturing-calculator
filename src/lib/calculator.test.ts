@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+
 import { calculateManufacturing } from "./calculator";
 
 describe("calculateManufacturing", () => {

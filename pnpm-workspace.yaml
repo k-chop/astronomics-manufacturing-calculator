@@ -1,4 +1,4 @@
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - esbuild
-minimumReleaseAge: 10080
+minimumReleaseAge: 1440
+allowBuilds:
+  "@tailwindcss/oxide": true
+  esbuild: true
