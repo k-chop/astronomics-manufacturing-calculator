@@ -52,7 +52,7 @@ export function ItemWithTooltip({
         )}
       </span>
       {hasTooltip && (
-        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-white text-gray-800 text-base font-normal rounded px-4 py-3 z-10 border border-gray-300 shadow-lg">
+        <span className="invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition duration-100 ease-out motion-reduce:transition-none absolute left-0 top-full mt-1 w-max max-w-md bg-white text-gray-800 text-base font-normal rounded px-4 py-3 z-10 border border-gray-300 shadow-lg">
           {hasAliasTooltip && (
             <div className="mb-4">
               <TooltipHeading>Can use any of</TooltipHeading>
