@@ -169,15 +169,17 @@ function InventoryRowView({
   onRecordStepRuns,
   locale,
 }: InventoryRowViewProps) {
+  // 行全体に掛けるとポップアップまで薄くなるので、各セルの中身にだけ掛ける
+  const mutedClass = isRowSatisfied(row) ? "opacity-60" : "";
   return (
     <tr
-      className={`border-t border-blue-100 align-top ${isRowSatisfied(row) ? "opacity-60" : ""} ${getRowClass(row.item, hoveredItem, relatedKind)}`}
+      className={`border-t border-blue-100 align-top ${getRowClass(row.item, hoveredItem, relatedKind)}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       <td className="py-1.5 pr-2 break-words">
         <div className={cellTextClass}>
-          <ItemWithTooltip itemId={row.item} locale={locale} className="font-medium text-gray-700">
+          <ItemWithTooltip itemId={row.item} locale={locale} className={`font-medium text-gray-700 ${mutedClass}`}>
             {relationsTooltip}
           </ItemWithTooltip>
           {hoveredItem !== null && relatedKind !== undefined && (
@@ -185,7 +187,7 @@ function InventoryRowView({
           )}
         </div>
         {crafts.length > 0 && (
-          <div className="space-y-1 mt-1">
+          <div className={`space-y-1 mt-1 ${mutedClass}`}>
             {crafts.map((craft) => (
               <div
                 key={`${craft.entry.id}:${craft.stepIndex}`}
@@ -217,7 +219,7 @@ function InventoryRowView({
         )}
       </td>
       <td className="py-1.5 px-1 text-right font-mono text-gray-700 whitespace-nowrap">
-        <div className={cellTextClass}>{formatNumber(row.required)}</div>
+        <div className={`${cellTextClass} ${mutedClass}`}>{formatNumber(row.required)}</div>
       </td>
       <td className="py-1.5 px-1 text-right">
         <input
@@ -226,11 +228,11 @@ function InventoryRowView({
           value={row.have}
           aria-label={`Have ${row.item}`}
           onChange={(e) => onUpdateInventory(row.item, Number(e.target.value))}
-          className="w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white"
+          className={`w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white ${mutedClass}`}
         />
       </td>
       <td className="group py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
-        <div className={cellTextClass}>
+        <div className={`${cellTextClass} ${mutedClass}`}>
           {row.missing > 0 && !row.crafted ? (
             // 乗せると「Collected」に変わり、押すと Have を Required にする
             <button
