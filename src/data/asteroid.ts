@@ -42,6 +42,25 @@ const compositionNames = {
   silicate: { en: "Silicate" },
 } as const;
 
+type Composition = keyof typeof compositionNames;
+
+// 組成指定（"carbonite-asteroids" など）→ 組成
+const compositionByGenericId = {
+  "carbonite-asteroids": "carbonite",
+  "metallic-asteroids": "metallic",
+  "silicate-asteroids": "silicate",
+} as const satisfies { [genericId: string]: Composition };
+
+const nebulaNames = {
+  "argon-gas-nebula": { en: "Argon Gas Nebula" },
+  "chlorine-gas-nebula": { en: "Chlorine Gas Nebula" },
+  "helium-gas-nebula": { en: "Helium Gas Nebula" },
+  "hydrogen-gas-nebula": { en: "Hydrogen Gas Nebula" },
+  "neon-gas-nebula": { en: "Neon Gas Nebula" },
+  "nitrogen-gas-nebula": { en: "Nitrogen Gas Nebula" },
+  "oxygen-gas-nebula": { en: "Oxygen Gas Nebula" },
+} as const;
+
 export const genericAsteroidNames = {
   // Generic types
   "carbonite-asteroids": { en: "Carbonite Asteroids" },
@@ -50,27 +69,52 @@ export const genericAsteroidNames = {
   any: { en: "Any Asteroid" },
 
   // Gas nebulae (on the map, not on asteroids)
-  "argon-gas-nebula": { en: "Argon Gas Nebula" },
-  "chlorine-gas-nebula": { en: "Chlorine Gas Nebula" },
-  "helium-gas-nebula": { en: "Helium Gas Nebula" },
-  "hydrogen-gas-nebula": { en: "Hydrogen Gas Nebula" },
-  "neon-gas-nebula": { en: "Neon Gas Nebula" },
-  "nitrogen-gas-nebula": { en: "Nitrogen Gas Nebula" },
-  "oxygen-gas-nebula": { en: "Oxygen Gas Nebula" },
+  ...nebulaNames,
 } satisfies {
   [asteroidId: string]: {
     en: string;
   };
 };
 
-export type AsteroidName = keyof typeof asteroids | keyof typeof genericAsteroidNames;
+export type AsteroidId = keyof typeof asteroids;
+export type NebulaId = keyof typeof nebulaNames;
+export type AsteroidName = AsteroidId | keyof typeof genericAsteroidNames;
+
+/** 個別小惑星の ID をテーブル順で並べたもの（表示順の基準） */
+export const asteroidIds = Object.keys(asteroids) as AsteroidId[];
+
+/**
+ * 採取地の指定を具体的な場所に展開したもの
+ * any は「どの小惑星でも」なので個別には展開しない
+ */
+export type CollectionSite = { kind: "asteroid"; id: AsteroidId } | { kind: "nebula"; id: NebulaId } | { kind: "any" };
+
+function isAsteroidId(location: AsteroidName): location is AsteroidId {
+  return location in asteroids;
+}
+
+function isNebulaId(location: AsteroidName): location is NebulaId {
+  return location in nebulaNames;
+}
+
+/**
+ * 採取地の指定（個別小惑星 / 組成指定 / any / 星雲）を具体的な場所に展開する
+ * 組成指定はその組成の小惑星すべて（テーブル順）になる
+ */
+export function resolveLocation(location: AsteroidName): CollectionSite[] {
+  if (isAsteroidId(location)) return [{ kind: "asteroid", id: location }];
+  if (isNebulaId(location)) return [{ kind: "nebula", id: location }];
+  if (location === "any") return [{ kind: "any" }];
+  const composition = compositionByGenericId[location];
+  return asteroidIds.filter((id) => asteroids[id].composition === composition).map((id) => ({ kind: "asteroid", id }));
+}
 
 export function getAsteroidInfo(
   asteroidId: AsteroidName,
   locale: Locale = "en",
 ): { name: string; region?: string; compositon?: string } {
-  if (asteroidId in asteroids) {
-    const a = asteroids[asteroidId as keyof typeof asteroids];
+  if (isAsteroidId(asteroidId)) {
+    const a = asteroids[asteroidId];
     return {
       name: a.name,
       region: regionNames[a.region][locale],
@@ -78,7 +122,7 @@ export function getAsteroidInfo(
     };
   } else {
     return {
-      name: genericAsteroidNames[asteroidId as keyof typeof genericAsteroidNames][locale],
+      name: genericAsteroidNames[asteroidId][locale],
     };
   }
 }

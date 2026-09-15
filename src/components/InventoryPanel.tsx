@@ -1,8 +1,9 @@
-import { Fragment, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { getItemName, type Locale } from "../data/item-names";
 import { getMachineName } from "../data/machines";
 import type { ItemStack } from "../data/recipes";
+import { type CollectionRoute as CollectionRouteData, hasCollectionRoute } from "../lib/collection-route";
 import { formatNumber } from "../lib/format-utils";
 import { getEntryTitle } from "../lib/plan-format";
 import {
@@ -14,12 +15,14 @@ import {
   type StepUse,
 } from "../lib/production-plan-utils";
 import { formatItemStacks } from "../lib/recipe-format";
+import { CollectionRoute } from "./CollectionRoute";
 import { ItemWithTooltip, TooltipHeading } from "./ItemWithTooltip";
 
 type InventoryPanelProps = {
   rows: InventoryRow[];
   craftsByOutput: Map<string, ReadyCraft[]>; // 出力アイテム id → 今実行できる製造ステップ
   relations: Map<string, ItemRelations>; // アイテム id → 何から作る／何に使う
+  collectionRoute: CollectionRouteData; // 集めるもののうち足りないものを、どの順に回れば揃うかにしたもの
   onUpdateInventory: (itemId: string, amount: number) => void;
   onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
   locale?: Locale;
@@ -37,10 +40,9 @@ const relatedRowClass: { [kind in RelationKind]: string } = {
   product: "bg-sky-200",
 };
 
-function getRowClass(item: string, hoveredItem: string | null, related: Map<string, RelationKind>): string {
+function getRowClass(item: string, hoveredItem: string | null, relatedKind: RelationKind | undefined): string {
   if (item === hoveredItem) return "bg-white/70";
-  const kind = related.get(item);
-  return kind === undefined ? "" : relatedRowClass[kind];
+  return relatedKind === undefined ? "" : relatedRowClass[relatedKind];
 }
 
 const relationBadgeClass: { [kind in RelationKind]: string } = {
@@ -137,10 +139,129 @@ function RelationsTooltip({ item, relations, locale }: { item: string; relations
   );
 }
 
+type InventoryRowViewProps = {
+  row: InventoryRow;
+  crafts: ReadyCraft[]; // この行のアイテムを出力する、今実行できる製造ステップ
+  relationsTooltip: ReactNode | undefined;
+  hoveredItem: string | null;
+  relatedKind: RelationKind | undefined;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onUpdateInventory: (itemId: string, amount: number) => void;
+  onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
+  locale: Locale;
+};
+
+/**
+ * 在庫パネルの 1 行（アイテム名・実行できるステップ・必要数・在庫・不足）
+ */
+function InventoryRowView({
+  row,
+  crafts,
+  relationsTooltip,
+  hoveredItem,
+  relatedKind,
+  onMouseEnter,
+  onMouseLeave,
+  onUpdateInventory,
+  onRecordStepRuns,
+  locale,
+}: InventoryRowViewProps) {
+  return (
+    <tr
+      className={`border-t border-blue-100 align-top ${getRowClass(row.item, hoveredItem, relatedKind)}`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <td className="py-1.5 pr-2 break-words">
+        <div className={cellTextClass}>
+          <ItemWithTooltip itemId={row.item} locale={locale} className="font-medium text-gray-700">
+            {relationsTooltip}
+          </ItemWithTooltip>
+          {hoveredItem !== null && relatedKind !== undefined && (
+            <RelationBadge kind={relatedKind} hoveredItem={hoveredItem} locale={locale} />
+          )}
+        </div>
+        {crafts.length > 0 && (
+          <div className="space-y-1 mt-1">
+            {crafts.map((craft) => (
+              <div
+                key={`${craft.entry.id}:${craft.stepIndex}`}
+                className="flex items-center gap-2 flex-wrap text-sm"
+                title={`${getEntryTitle(craft.entry, locale)} · ${formatItemStacks(craft.recipe.inputs, locale)} → ${formatItemStacks(craft.recipe.outputs, locale)}`}
+              >
+                <span className="text-green-700">
+                  ← {formatItemStacks(craft.recipe.inputs, locale)} ({formatNumber(craft.runs)}×)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onRecordStepRuns(craft.entry.id, craft.stepIndex, 1)}
+                  className={runButtonClass}
+                >
+                  Run ×1
+                </button>
+                {craft.runs > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onRecordStepRuns(craft.entry.id, craft.stepIndex, craft.runs)}
+                    className={runButtonClass}
+                  >
+                    Run ×{formatNumber(craft.runs)}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </td>
+      <td className="py-1.5 px-1 text-right font-mono text-gray-700 whitespace-nowrap">
+        <div className={cellTextClass}>{formatNumber(row.required)}</div>
+      </td>
+      <td className="py-1.5 px-1 text-right">
+        <input
+          type="number"
+          min="0"
+          value={row.have}
+          aria-label={`Have ${row.item}`}
+          onChange={(e) => onUpdateInventory(row.item, Number(e.target.value))}
+          className="w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white"
+        />
+      </td>
+      <td className="py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
+        <div className={cellTextClass}>
+          {row.missing > 0 ? (
+            <span className="text-red-600">{formatNumber(row.missing)}</span>
+          ) : row.have >= row.required ? (
+            <span className="text-green-600">✓</span>
+          ) : (
+            <span className="text-gray-400 font-normal" title="Covered by crafting from what you have">
+              craft
+            </span>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+/**
+ * Collect / Craft の区分見出し行
+ */
+function GroupHeading({ label }: { label: string }) {
+  return (
+    <tr>
+      <td colSpan={4} className="pt-3 pb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
+        {label}
+      </td>
+    </tr>
+  );
+}
+
 export function InventoryPanel({
   rows,
   craftsByOutput,
   relations,
+  collectionRoute,
   onUpdateInventory,
   onRecordStepRuns,
   locale = "en",
@@ -152,6 +273,33 @@ export function InventoryPanel({
   }
 
   const related = hoveredItem === null ? new Map<string, RelationKind>() : getRelatedRows(relations, hoveredItem);
+  // 集めるもの → 作るもの の順に並んでいるので、区分ごとに見出しを付けて描画する
+  const collectRows = rows.filter((row) => !row.crafted);
+  const craftRows = rows.filter((row) => row.crafted);
+
+  const renderRow = (row: InventoryRow) => {
+    const rowRelations = relations.get(row.item);
+    return (
+      <InventoryRowView
+        key={row.item}
+        row={row}
+        crafts={craftsByOutput.get(row.item) ?? []}
+        // 関係が無い行には渡さない（渡すとポップアップと下線が出てしまう）
+        relationsTooltip={
+          hasRelations(rowRelations) ? (
+            <RelationsTooltip item={row.item} relations={rowRelations} locale={locale} />
+          ) : undefined
+        }
+        hoveredItem={hoveredItem}
+        relatedKind={related.get(row.item)}
+        onMouseEnter={() => setHoveredItem(row.item)}
+        onMouseLeave={() => setHoveredItem((current) => (current === row.item ? null : current))}
+        onUpdateInventory={onUpdateInventory}
+        onRecordStepRuns={onRecordStepRuns}
+        locale={locale}
+      />
+    );
+  };
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-2 border-blue-200">
@@ -176,101 +324,25 @@ export function InventoryPanel({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => {
-            const crafts = craftsByOutput.get(row.item) ?? [];
-            const rowRelations = relations.get(row.item);
-            const relatedKind = related.get(row.item);
-            // 関係が無い行には children を渡さない（渡すとポップアップと下線が出てしまう）
-            const relationsTooltip = hasRelations(rowRelations) ? (
-              <RelationsTooltip item={row.item} relations={rowRelations} locale={locale} />
-            ) : undefined;
-            // 集めるもの → 作るもの の順に並んでいるので、各グループの先頭に見出し行を入れる
-            const startsGroup = index === 0 || rows[index - 1].crafted !== row.crafted;
-            return (
-              <Fragment key={row.item}>
-                {startsGroup && (
-                  <tr>
-                    <td colSpan={4} className="pt-3 pb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
-                      {row.crafted ? "Craft" : "Collect"}
-                    </td>
-                  </tr>
-                )}
-                <tr
-                  className={`border-t border-blue-100 align-top ${getRowClass(row.item, hoveredItem, related)}`}
-                  onMouseEnter={() => setHoveredItem(row.item)}
-                  onMouseLeave={() => setHoveredItem((current) => (current === row.item ? null : current))}
-                >
-                  <td className="py-1.5 pr-2 break-words">
-                    <div className={cellTextClass}>
-                      <ItemWithTooltip itemId={row.item} locale={locale} className="font-medium text-gray-700">
-                        {relationsTooltip}
-                      </ItemWithTooltip>
-                      {hoveredItem !== null && relatedKind !== undefined && (
-                        <RelationBadge kind={relatedKind} hoveredItem={hoveredItem} locale={locale} />
-                      )}
-                    </div>
-                    {crafts.length > 0 && (
-                      <div className="space-y-1 mt-1">
-                        {crafts.map((craft) => (
-                          <div
-                            key={`${craft.entry.id}:${craft.stepIndex}`}
-                            className="flex items-center gap-2 flex-wrap text-sm"
-                            title={`${getEntryTitle(craft.entry, locale)} · ${formatItemStacks(craft.recipe.inputs, locale)} → ${formatItemStacks(craft.recipe.outputs, locale)}`}
-                          >
-                            <span className="text-green-700">
-                              ← {formatItemStacks(craft.recipe.inputs, locale)} ({formatNumber(craft.runs)}×)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => onRecordStepRuns(craft.entry.id, craft.stepIndex, 1)}
-                              className={runButtonClass}
-                            >
-                              Run ×1
-                            </button>
-                            {craft.runs > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => onRecordStepRuns(craft.entry.id, craft.stepIndex, craft.runs)}
-                                className={runButtonClass}
-                              >
-                                Run ×{formatNumber(craft.runs)}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-1.5 px-1 text-right font-mono text-gray-700 whitespace-nowrap">
-                    <div className={cellTextClass}>{formatNumber(row.required)}</div>
-                  </td>
-                  <td className="py-1.5 px-1 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={row.have}
-                      aria-label={`Have ${row.item}`}
-                      onChange={(e) => onUpdateInventory(row.item, Number(e.target.value))}
-                      className="w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white"
-                    />
-                  </td>
-                  <td className="py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
-                    <div className={cellTextClass}>
-                      {row.missing > 0 ? (
-                        <span className="text-red-600">{formatNumber(row.missing)}</span>
-                      ) : row.have >= row.required ? (
-                        <span className="text-green-600">✓</span>
-                      ) : (
-                        <span className="text-gray-400 font-normal" title="Covered by crafting from what you have">
-                          craft
-                        </span>
-                      )}
-                    </div>
+          {collectRows.length > 0 && (
+            <>
+              <GroupHeading label="Collect" />
+              {collectRows.map(renderRow)}
+              {hasCollectionRoute(collectionRoute) && (
+                <tr className="border-t border-blue-100">
+                  <td colSpan={4} className="pt-3 pb-1">
+                    <CollectionRoute route={collectionRoute} locale={locale} />
                   </td>
                 </tr>
-              </Fragment>
-            );
-          })}
+              )}
+            </>
+          )}
+          {craftRows.length > 0 && (
+            <>
+              <GroupHeading label="Craft" />
+              {craftRows.map(renderRow)}
+            </>
+          )}
         </tbody>
       </table>
     </div>

@@ -172,6 +172,7 @@ export const App = () => {
               rows={planAnalysis.rows}
               craftsByOutput={planAnalysis.craftsByOutput}
               relations={planAnalysis.relations}
+              collectionRoute={planAnalysis.collectionRoute}
               onUpdateInventory={handleUpdateInventory}
               onRecordStepRuns={handleRecordStepRuns}
             />

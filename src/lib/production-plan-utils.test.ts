@@ -499,6 +499,20 @@ describe("analyzePlan の crafts", () => {
   });
 });
 
+describe("analyzePlan の collectionRoute", () => {
+  it("足りない集めるものだけが場所ごとにまとまり、在庫で満たすと消える", () => {
+    // Graphite の Pattern 2 は biomass 500 だけを集める
+    let plan = graphitePlan({ biomass: 200 });
+    let route = analyzePlan(plan).collectionRoute;
+    expect(route.stops).toEqual([]);
+    expect(route.anywhere).toEqual([{ item: "biomass", missing: 300 }]);
+
+    plan = setInventory(plan, "biomass", 500);
+    route = analyzePlan(plan).collectionRoute;
+    expect(route).toEqual({ stops: [], nebulae: [], anywhere: [] });
+  });
+});
+
 const stepLabel = ({ recipe }: { recipe: { inputs: { item: string }[]; outputs: { item: string }[] } }) =>
   `${recipe.inputs[0].item}>${recipe.outputs[0].item}`;
 

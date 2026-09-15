@@ -11,6 +11,7 @@ import type {
 } from "../types/production-plan";
 import type { CalculationRecipe, CalculationResult } from "./calculator";
 import { calculateManufacturing, mergeItemStacks } from "./calculator";
+import { buildCollectionRoute, type CollectionRoute } from "./collection-route";
 
 /**
  * ユニークIDを生成
@@ -372,6 +373,7 @@ export type PlanAnalysis = {
   crafts: ReadyCraft[]; // 今の在庫で実行できる製造ステップ（未完了エントリのみ）
   craftsByOutput: Map<string, ReadyCraft[]>; // crafts を出力アイテムごとにまとめたもの（在庫パネルの表示用）
   relations: Map<string, ItemRelations>; // アイテム id → 未完了エントリ内での「何から作る／何に使う」
+  collectionRoute: CollectionRoute; // 集めるもののうち足りないものを、どの順に回れば揃うかにしたもの
 };
 
 type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
@@ -482,11 +484,13 @@ export function analyzePlan(plan: ProductionPlan): PlanAnalysis {
   const analyzed = plan.items.map((entry): AnalyzedEntry => ({ entry, analysis: analyzeEntry(entry, plan.inventory) }));
   const pending = analyzed.filter(({ entry }) => !entry.completed);
   const crafts = collectReadyCrafts(pending);
+  const rows = buildInventoryRows(plan.inventory, pending);
   return {
     entries: new Map(analyzed.map(({ entry, analysis }) => [entry.id, analysis])),
-    rows: buildInventoryRows(plan.inventory, pending),
+    rows,
     crafts,
     craftsByOutput: groupCraftsByOutput(crafts),
     relations: buildRelations(pending),
+    collectionRoute: buildCollectionRoute(rows),
   };
 }
