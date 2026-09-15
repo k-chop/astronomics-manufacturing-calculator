@@ -1,15 +1,25 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 
-import type { Locale } from "../data/item-names";
+import { getItemName, type Locale } from "../data/item-names";
+import { getMachineName } from "../data/machines";
+import type { ItemStack } from "../data/recipes";
 import { formatNumber } from "../lib/format-utils";
 import { getEntryTitle } from "../lib/plan-format";
-import type { InventoryRow, ReadyCraft } from "../lib/production-plan-utils";
+import {
+  getRelatedRows,
+  type InventoryRow,
+  type ItemRelations,
+  type ReadyCraft,
+  type RelationKind,
+  type StepUse,
+} from "../lib/production-plan-utils";
 import { formatItemStacks } from "../lib/recipe-format";
-import { ItemWithTooltip } from "./ItemWithTooltip";
+import { ItemWithTooltip, TooltipHeading } from "./ItemWithTooltip";
 
 type InventoryPanelProps = {
   rows: InventoryRow[];
   craftsByOutput: Map<string, ReadyCraft[]>; // 出力アイテム id → 今実行できる製造ステップ
+  relations: Map<string, ItemRelations>; // アイテム id → 何から作る／何に使う
   onUpdateInventory: (itemId: string, amount: number) => void;
   onRecordStepRuns: (entryId: string, stepIndex: number, delta: number) => void;
   locale?: Locale;
@@ -21,16 +31,127 @@ const cellTextClass = "py-1 border border-transparent";
 const runButtonClass =
   "px-2 py-0.5 text-xs font-medium rounded bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap";
 
+// 乗せている行の材料になる行は amber、乗せている行から作られる行は sky（パネル背景が blue-50 系なので薄い青は避ける）
+const relatedRowClass: { [kind in RelationKind]: string } = {
+  material: "bg-amber-100",
+  product: "bg-sky-200",
+};
+
+function getRowClass(item: string, hoveredItem: string | null, related: Map<string, RelationKind>): string {
+  if (item === hoveredItem) return "bg-white/70";
+  const kind = related.get(item);
+  return kind === undefined ? "" : relatedRowClass[kind];
+}
+
+const relationBadgeClass: { [kind in RelationKind]: string } = {
+  material: "bg-amber-200 text-amber-900",
+  product: "bg-sky-300 text-sky-900",
+};
+
+/**
+ * 乗せている行との関係を示すバッジ（"material for Carbon" / "made from Carbon"）
+ */
+function RelationBadge({ kind, hoveredItem, locale }: { kind: RelationKind; hoveredItem: string; locale: Locale }) {
+  const label = kind === "material" ? "material for" : "made from";
+  return (
+    <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap ${relationBadgeClass[kind]}`}>
+      {label} {getItemName(hoveredItem, locale)}
+    </span>
+  );
+}
+
+/**
+ * ツリーの 1 行分。ポップアップを出しているアイテム自身なら薄い背景で強調する
+ */
+function TreeItem({ stack, item, locale }: { stack: ItemStack; item: string; locale: Locale }) {
+  return (
+    <span className={stack.item === item ? "bg-amber-100 rounded px-1" : "px-1"}>
+      {formatItemStacks([stack], locale)}
+    </span>
+  );
+}
+
+/**
+ * レシピをツリーで表示する（完成品を親、材料を子、最後に機械名とエントリ名）
+ */
+function RecipeTree({ uses, item, locale }: { uses: StepUse[]; item: string; locale: Locale }) {
+  return uses.map(({ entry, stepIndex, recipe }) => (
+    <div key={`${entry.id}:${stepIndex}`}>
+      {recipe.outputs.map((output) => (
+        <div key={output.item}>
+          <TreeItem stack={output} item={item} locale={locale} />
+          <span className="text-xs text-gray-500">with {getMachineName(recipe.machine, locale)}</span>
+        </div>
+      ))}
+      {recipe.inputs.map((input, index) => (
+        <div key={input.item} className="flex items-baseline gap-1 pl-4">
+          <span className="font-mono text-gray-500">{index === recipe.inputs.length - 1 ? "└─" : "├─"}</span>
+          <TreeItem stack={input} item={item} locale={locale} />
+        </div>
+      ))}
+      <div className="text-xs text-gray-500 px-1">for {getEntryTitle(entry, locale)}</div>
+    </div>
+  ));
+}
+
+function hasRelations(relations: ItemRelations | undefined): relations is ItemRelations {
+  return (
+    relations !== undefined &&
+    (relations.madeBy.length > 0 || relations.usedIn.length > 0 || relations.usedFor.length > 0)
+  );
+}
+
+/**
+ * ポップアップに出す「何から作る／何に使う」
+ */
+function RelationsTooltip({ item, relations, locale }: { item: string; relations: ItemRelations; locale: Locale }) {
+  const { madeBy, usedIn, usedFor } = relations;
+  const hasMadeBy = madeBy.length > 0;
+  const hasUsedFor = usedIn.length > 0 || usedFor.length > 0;
+
+  return (
+    <>
+      {hasMadeBy && (
+        <div className={hasUsedFor ? "mb-4" : ""}>
+          <TooltipHeading>Made from</TooltipHeading>
+          <div className="space-y-2">
+            <RecipeTree uses={madeBy} item={item} locale={locale} />
+          </div>
+        </div>
+      )}
+      {hasUsedFor && (
+        <div>
+          <TooltipHeading>Used for</TooltipHeading>
+          <div className="space-y-2">
+            <RecipeTree uses={usedIn} item={item} locale={locale} />
+            {usedFor.map(({ entry, amount }) => (
+              <div key={entry.id}>
+                {getEntryTitle(entry, locale)}
+                {entry.kind === "upgrade" && <span className="text-gray-500"> ×{formatNumber(amount)}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export function InventoryPanel({
   rows,
   craftsByOutput,
+  relations,
   onUpdateInventory,
   onRecordStepRuns,
   locale = "en",
 }: InventoryPanelProps) {
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
   if (rows.length === 0) {
     return null;
   }
+
+  const related = hoveredItem === null ? new Map<string, RelationKind>() : getRelatedRows(relations, hoveredItem);
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-2 border-blue-200">
@@ -57,6 +178,12 @@ export function InventoryPanel({
         <tbody>
           {rows.map((row, index) => {
             const crafts = craftsByOutput.get(row.item) ?? [];
+            const rowRelations = relations.get(row.item);
+            const relatedKind = related.get(row.item);
+            // 関係が無い行には children を渡さない（渡すとポップアップと下線が出てしまう）
+            const relationsTooltip = hasRelations(rowRelations) ? (
+              <RelationsTooltip item={row.item} relations={rowRelations} locale={locale} />
+            ) : undefined;
             // 集めるもの → 作るもの の順に並んでいるので、各グループの先頭に見出し行を入れる
             const startsGroup = index === 0 || rows[index - 1].crafted !== row.crafted;
             return (
@@ -68,10 +195,19 @@ export function InventoryPanel({
                     </td>
                   </tr>
                 )}
-                <tr className="border-t border-blue-100 align-top">
+                <tr
+                  className={`border-t border-blue-100 align-top ${getRowClass(row.item, hoveredItem, related)}`}
+                  onMouseEnter={() => setHoveredItem(row.item)}
+                  onMouseLeave={() => setHoveredItem((current) => (current === row.item ? null : current))}
+                >
                   <td className="py-1.5 pr-2 break-words">
                     <div className={cellTextClass}>
-                      <ItemWithTooltip itemId={row.item} locale={locale} className="font-medium text-gray-700" />
+                      <ItemWithTooltip itemId={row.item} locale={locale} className="font-medium text-gray-700">
+                        {relationsTooltip}
+                      </ItemWithTooltip>
+                      {hoveredItem !== null && relatedKind !== undefined && (
+                        <RelationBadge kind={relatedKind} hoveredItem={hoveredItem} locale={locale} />
+                      )}
                     </div>
                     {crafts.length > 0 && (
                       <div className="space-y-1 mt-1">

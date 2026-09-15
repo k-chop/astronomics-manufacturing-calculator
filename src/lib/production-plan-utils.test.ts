@@ -10,6 +10,7 @@ import {
   emptyProductionPlan,
   getCraftableRuns,
   getEntrySteps,
+  getRelatedRows,
   analyzePlan,
   getUpgradeRequirementMaterials,
   isMaterialsCovered,
@@ -495,6 +496,60 @@ describe("analyzePlan の crafts", () => {
       { item: "carbon", required: 50, have: 50, missing: 0, crafted: true },
       { item: "graphite", required: 20, have: 10, missing: 0, crafted: true },
     ]);
+  });
+});
+
+const stepLabel = ({ recipe }: { recipe: { inputs: { item: string }[]; outputs: { item: string }[] } }) =>
+  `${recipe.inputs[0].item}>${recipe.outputs[0].item}`;
+
+describe("analyzePlan の relations", () => {
+  it("item エントリのステップから、何から作る／何に使うが集まる", () => {
+    const plan = graphitePlan();
+    const entry = plan.items[0];
+    const relations = analyzePlan(plan).relations;
+
+    const carbon = relations.get("carbon");
+    expect(carbon?.madeBy.map(stepLabel)).toEqual(["biomass>carbon"]);
+    expect(carbon?.usedIn.map(stepLabel)).toEqual(["carbon>graphite"]);
+    expect(carbon?.usedFor).toEqual([]);
+
+    const graphite = relations.get("graphite");
+    expect(graphite?.madeBy.map(stepLabel)).toEqual(["carbon>graphite"]);
+    expect(graphite?.usedIn).toEqual([]);
+    expect(graphite?.usedFor).toEqual([{ entry, amount: 20 }]);
+
+    const biomass = relations.get("biomass");
+    expect(biomass?.madeBy).toEqual([]);
+    expect(biomass?.usedIn.map(stepLabel)).toEqual(["biomass>carbon"]);
+    expect(biomass?.usedFor).toEqual([]);
+
+    expect(relations.get("carbon")?.madeBy[0].entry).toBe(entry);
+  });
+
+  it("upgrade の要求資源は usedFor に数量付きで入る", () => {
+    const plan = addUpgradeToPlan(emptyProductionPlan, "fuel-capacity", 1);
+    const entry = plan.items[0];
+    const relations = analyzePlan(plan).relations;
+
+    expect(relations.get("biomass")).toEqual({ madeBy: [], usedIn: [], usedFor: [{ entry, amount: 300 }] });
+    expect(relations.get("carbon")).toEqual({ madeBy: [], usedIn: [], usedFor: [{ entry, amount: 500 }] });
+  });
+
+  it("完了済みエントリは含まれない", () => {
+    const plan = graphitePlan();
+    expect(analyzePlan(toggleItemCompletion(plan, plan.items[0].id)).relations.size).toBe(0);
+  });
+
+  it("getRelatedRows は材料側と成果物側を区別して返す（自分自身は除く）", () => {
+    const relations = analyzePlan(graphitePlan()).relations;
+
+    expect([...getRelatedRows(relations, "carbon")]).toEqual([
+      ["biomass", "material"],
+      ["graphite", "product"],
+    ]);
+    expect([...getRelatedRows(relations, "biomass")]).toEqual([["carbon", "product"]]);
+    expect([...getRelatedRows(relations, "graphite")]).toEqual([["carbon", "material"]]);
+    expect(getRelatedRows(relations, "unknown").size).toBe(0);
   });
 });
 

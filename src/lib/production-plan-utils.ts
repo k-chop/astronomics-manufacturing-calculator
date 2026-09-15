@@ -347,11 +347,31 @@ export type ReadyCraft = {
   runs: number;
 };
 
+export type StepUse = {
+  entry: ProductionPlanEntry;
+  stepIndex: number;
+  recipe: CalculationRecipe;
+};
+
+export type DirectUse = {
+  entry: ProductionPlanEntry;
+  amount: number; // レシピを介さず要求する数
+};
+
+export type ItemRelations = {
+  madeBy: StepUse[]; // このアイテムを出力するステップ
+  usedIn: StepUse[]; // このアイテムを入力に使うステップ
+  usedFor: DirectUse[]; // upgrade の要求資源 / item エントリの最終成果物として直接要求するエントリ
+};
+
+export type RelationKind = "material" | "product";
+
 export type PlanAnalysis = {
   entries: Map<string, EntryAnalysis>; // エントリ id → 分析結果（完了済みも含む）
   rows: InventoryRow[]; // 在庫パネルの行
   crafts: ReadyCraft[]; // 今の在庫で実行できる製造ステップ（未完了エントリのみ）
   craftsByOutput: Map<string, ReadyCraft[]>; // crafts を出力アイテムごとにまとめたもの（在庫パネルの表示用）
+  relations: Map<string, ItemRelations>; // アイテム id → 未完了エントリ内での「何から作る／何に使う」
 };
 
 type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
@@ -406,6 +426,55 @@ function groupCraftsByOutput(crafts: ReadyCraft[]): Map<string, ReadyCraft[]> {
   return byOutput;
 }
 
+function getRelations(relations: Map<string, ItemRelations>, item: string): ItemRelations {
+  let relation = relations.get(item);
+  if (relation === undefined) {
+    relation = { madeBy: [], usedIn: [], usedFor: [] };
+    relations.set(item, relation);
+  }
+  return relation;
+}
+
+/**
+ * 未完了エントリのステップと要求資源から、アイテムごとの「何から作る／何に使う」を集める
+ * ステップは在庫で賄えて実行不要になったものや実行済みのものも含める（crafted の判定と同じ）
+ */
+function buildRelations(pending: AnalyzedEntry[]): Map<string, ItemRelations> {
+  const relations = new Map<string, ItemRelations>();
+  for (const { entry, analysis } of pending) {
+    analysis.steps.forEach(({ recipe }, stepIndex) => {
+      const use: StepUse = { entry, stepIndex, recipe };
+      for (const output of recipe.outputs) getRelations(relations, output.item).madeBy.push(use);
+      for (const input of recipe.inputs) getRelations(relations, input.item).usedIn.push(use);
+    });
+    if (entry.kind === "upgrade") {
+      for (const requirement of entry.requirements) {
+        getRelations(relations, requirement.item).usedFor.push({ entry, amount: requirement.amount });
+      }
+    } else {
+      getRelations(relations, entry.itemId).usedFor.push({ entry, amount: entry.amount });
+    }
+  }
+  return relations;
+}
+
+/**
+ * 在庫パネルでアイテムに乗せたときに光らせる行
+ * material: そのアイテムを作るステップの入力、product: そのアイテムを入力に使うステップの出力（自分自身は除く）
+ */
+export function getRelatedRows(relations: Map<string, ItemRelations>, item: string): Map<string, RelationKind> {
+  const related = new Map<string, RelationKind>();
+  const relation = relations.get(item);
+  if (relation === undefined) return related;
+  for (const { recipe } of relation.madeBy) {
+    for (const input of recipe.inputs) if (input.item !== item) related.set(input.item, "material");
+  }
+  for (const { recipe } of relation.usedIn) {
+    for (const output of recipe.outputs) if (output.item !== item) related.set(output.item, "product");
+  }
+  return related;
+}
+
 /**
  * プラン全体を在庫に基づいて分析する（各エントリの分析を 1 回だけ行い、そこから在庫行とクラフト提案を導く）
  */
@@ -418,5 +487,6 @@ export function analyzePlan(plan: ProductionPlan): PlanAnalysis {
     rows: buildInventoryRows(plan.inventory, pending),
     crafts,
     craftsByOutput: groupCraftsByOutput(crafts),
+    relations: buildRelations(pending),
   };
 }
