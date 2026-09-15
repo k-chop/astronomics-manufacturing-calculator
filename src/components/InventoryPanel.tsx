@@ -154,6 +154,7 @@ type InventoryRowViewProps = {
 
 /**
  * 在庫パネルの 1 行（アイテム名・実行できるステップ・必要数・在庫・不足）
+ * 集めるものの不足数字は乗せると「Collected」に変わり、押すと Have を Required にする
  */
 function InventoryRowView({
   row,
@@ -227,9 +228,20 @@ function InventoryRowView({
           className="w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white"
         />
       </td>
-      <td className="py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
+      <td className="group py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">
         <div className={cellTextClass}>
-          {row.missing > 0 ? (
+          {row.missing > 0 && !row.crafted ? (
+            // 乗せると「Collected」に変わり、押すと Have を Required にする
+            <button
+              type="button"
+              onClick={() => onUpdateInventory(row.item, row.required)}
+              className="text-red-600 cursor-pointer"
+              title="Mark as collected (set Have to Required)"
+            >
+              <span className="group-hover:hidden">{formatNumber(row.missing)}</span>
+              <span className="hidden group-hover:inline font-sans font-medium text-sm text-green-700">Collected</span>
+            </button>
+          ) : row.missing > 0 ? (
             <span className="text-red-600">{formatNumber(row.missing)}</span>
           ) : row.have >= row.required ? (
             <span className="text-green-600">✓</span>
