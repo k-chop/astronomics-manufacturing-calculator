@@ -27,7 +27,7 @@ function EntryTitle({
   inventory: Inventory;
   locale: Locale;
 }) {
-  const titleClass = `font-semibold text-lg ${entry.completed ? "line-through text-gray-500" : "text-gray-900"}`;
+  const titleClass = `font-semibold text-xl ${entry.completed ? "line-through text-gray-500" : "text-gray-900"}`;
 
   if (entry.kind === "item") {
     return (
@@ -43,9 +43,9 @@ function EntryTitle({
         <span className={titleClass}>
           {getUpgradeName(entry.upgradeId, locale)} Lv{entry.level}
         </span>
-        <span className="text-xs font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-700">Upgrade</span>
+        <span className="text-sm font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-700">Upgrade</span>
       </div>
-      <div className="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+      <div className="text-sm text-gray-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
         {entry.requirements.map((requirement) => {
           const have = inventory[requirement.item] ?? 0;
           const satisfied = entry.completed || have >= requirement.amount;
@@ -83,26 +83,26 @@ function EntryDetails({ entry, analysis, onRecordStepRuns, locale }: EntryDetail
     return seen === 0 ? base : `${base}#${seen}`;
   });
   const stepButtonClass =
-    "w-7 h-7 text-sm font-medium rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-default";
+    "w-7 h-7 text-base font-medium rounded border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-40 disabled:cursor-default";
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
       {/* Materials */}
       <div>
-        <div className="text-sm font-semibold text-gray-700 mb-2">Materials still needed:</div>
+        <div className="text-base font-semibold text-gray-700 mb-2">Materials still needed:</div>
         {statuses.length === 0 ? (
-          <p className="text-sm text-gray-500">Nothing more needed.</p>
+          <p className="text-base text-gray-500">Nothing more needed.</p>
         ) : (
           <div className="space-y-1">
             {statuses.map((status) => (
               <div
                 key={status.item}
-                className={`flex items-center justify-between gap-3 px-2 py-1.5 rounded text-sm ${
+                className={`flex items-center justify-between gap-3 px-2 py-1.5 rounded text-base ${
                   status.shortage === 0 ? "bg-green-50" : "bg-gray-50"
                 }`}
               >
                 <ItemWithTooltip itemId={status.item} locale={locale} />
-                <div className="font-mono text-xs text-gray-600">
+                <div className="font-mono text-sm text-gray-600">
                   {formatNumber(status.have)} / {formatNumber(status.need)}
                   {status.shortage > 0 ? (
                     <span className="ml-2 text-red-600 font-bold">short {formatNumber(status.shortage)}</span>
@@ -119,7 +119,7 @@ function EntryDetails({ entry, analysis, onRecordStepRuns, locale }: EntryDetail
       {/* Steps */}
       {steps.length > 0 && (
         <div>
-          <div className="text-sm font-semibold text-gray-700 mb-2">Steps:</div>
+          <div className="text-base font-semibold text-gray-700 mb-2">Steps:</div>
           <div className="space-y-2">
             {steps.map(({ recipe, done, remaining, usefulRuns, craftableNow }, stepIndex) => {
               const isDone = remaining === 0;
@@ -129,9 +129,9 @@ function EntryDetails({ entry, analysis, onRecordStepRuns, locale }: EntryDetail
                   key={stepKeys[stepIndex]}
                   className={`border border-gray-200 rounded p-2 ${isDone ? "bg-green-50" : "bg-gray-50"}`}
                 >
-                  <div className="text-sm text-gray-800">{formatRecipe(recipe, locale)}</div>
+                  <div className="text-base text-gray-800">{formatRecipe(recipe, locale)}</div>
                   <div className="flex items-center justify-between gap-3 flex-wrap mt-1">
-                    <div className="text-xs text-gray-600">
+                    <div className="text-sm text-gray-600">
                       {formatDuration(recipe.duration)} each · done{" "}
                       <span className="font-mono">
                         {formatNumber(done)} / {formatNumber(recipe.count)}
@@ -203,15 +203,15 @@ export function ProductionPlanList({
   if (plan.items.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
-        <p className="text-gray-500 text-sm">No entries in the plan yet. Add items or upgrades from the list.</p>
+        <h2 className="text-2xl font-bold mb-4 text-gray-900">Production Plan</h2>
+        <p className="text-gray-500 text-base">No entries in the plan yet. Add items or upgrades from the list.</p>
       </div>
     );
   }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-bold mb-4 text-gray-900">Production Plan</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-900">Production Plan</h2>
       <div className="space-y-3">
         {plan.items.map((entry) => {
           const entryAnalysis = analysis.entries.get(entry.id);
@@ -230,7 +230,7 @@ export function ProductionPlanList({
           return (
             <div key={entry.id} className={`border rounded-lg p-4 ${cardClass}`}>
               {ready && (
-                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded bg-green-600 text-white text-sm font-bold">
+                <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded bg-green-600 text-white text-base font-bold">
                   <span aria-hidden="true">🚀</span>
                   {entry.kind === "upgrade"
                     ? "Ready! You have everything for this upgrade. Go build it!"
@@ -254,7 +254,7 @@ export function ProductionPlanList({
                   />
                   <div className="flex-1">
                     <EntryTitle entry={entry} inventory={plan.inventory} locale={locale} />
-                    <div className="text-sm mt-1">
+                    <div className="text-base mt-1">
                       <span className={covered ? "text-green-700" : "text-gray-600"}>
                         Materials: {covered ? "covered" : `short (${shortCount} item${shortCount === 1 ? "" : "s"})`}
                       </span>
@@ -265,7 +265,7 @@ export function ProductionPlanList({
                       )}
                     </div>
                     {entry.kind === "item" && (
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-sm text-gray-500 mt-1">
                         Pattern {entry.selectedPatternIndex + 1} (
                         {formatDuration(entry.calculationResults[entry.selectedPatternIndex].totalDuration)})
                       </div>
@@ -276,14 +276,14 @@ export function ProductionPlanList({
                   <button
                     type="button"
                     onClick={() => toggleExpand(entry.id)}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium px-3 py-1 rounded hover:bg-blue-50"
+                    className="text-blue-600 hover:text-blue-800 text-base font-medium px-3 py-1 rounded hover:bg-blue-50"
                   >
                     {isExpanded ? "Hide" : "Details"}
                   </button>
                   <button
                     type="button"
                     onClick={() => onRemoveItem(entry.id)}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium px-3 py-1 rounded hover:bg-red-50"
+                    className="text-red-600 hover:text-red-800 text-base font-medium px-3 py-1 rounded hover:bg-red-50"
                   >
                     Remove
                   </button>

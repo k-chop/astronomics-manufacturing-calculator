@@ -19,7 +19,7 @@ type ItemWithTooltipProps = {
  */
 export function TooltipHeading({ children }: { children: ReactNode }) {
   return (
-    <div className="text-sm font-semibold uppercase tracking-wide text-gray-600 mb-2 pb-1 border-b border-gray-200">
+    <div className="text-base font-semibold uppercase tracking-wide text-gray-600 mb-2 pb-1 border-b border-gray-200">
       {children}
     </div>
   );
@@ -52,7 +52,7 @@ export function ItemWithTooltip({
         )}
       </span>
       {hasTooltip && (
-        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-white text-gray-800 text-sm font-normal rounded px-4 py-3 z-10 border border-gray-300 shadow-lg">
+        <span className="invisible group-hover:visible absolute left-0 top-full mt-1 w-max max-w-md bg-white text-gray-800 text-base font-normal rounded px-4 py-3 z-10 border border-gray-300 shadow-lg">
           {hasAliasTooltip && (
             <div className="mb-4">
               <TooltipHeading>Can use any of</TooltipHeading>

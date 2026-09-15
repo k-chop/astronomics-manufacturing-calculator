@@ -25,10 +25,10 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
       <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <div className="text-lg font-semibold">
+            <div className="text-xl font-semibold">
               {getUpgradeName(upgradeId, locale)} Lv{level}
             </div>
-            <div className="text-sm text-gray-600">{formatNumber(upgradeLevel.credits)}◆</div>
+            <div className="text-base text-gray-600">{formatNumber(upgradeLevel.credits)}◆</div>
           </div>
           <AddToPlanButton subtitle={`${getUpgradeName(upgradeId, locale)} Lv${level}`} onClick={onAddToPlan} />
         </div>
@@ -41,12 +41,12 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
               <div key={requirement.item} className="border border-gray-200 rounded p-3 bg-gray-50">
                 <div className="flex items-center gap-2">
                   <ItemWithTooltip itemId={requirement.item} locale={locale} className="text-gray-700 font-medium" />
-                  <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                  <span className="font-mono text-base bg-gray-100 px-2 py-0.5 rounded">
                     × {formatNumber(requirement.amount)}
                   </span>
                 </div>
                 {requirement.calculationResults !== null && (
-                  <div className="mt-1 text-xs text-gray-500">
+                  <div className="mt-1 text-sm text-gray-500">
                     → {formatItemStacks(requirement.calculationResults[0].totalItems, locale, ", ")}
                   </div>
                 )}
@@ -62,7 +62,7 @@ export function UpgradeResult({ upgradeId, level, onAddToPlan, locale = "en" }: 
             {materials.map((material) => (
               <div key={material.item} className="flex items-center gap-2">
                 <ItemWithTooltip itemId={material.item} locale={locale} className="text-gray-700" />
-                <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">
+                <span className="font-mono text-base bg-gray-100 px-2 py-0.5 rounded">
                   × {formatNumber(material.amount)}
                 </span>
               </div>

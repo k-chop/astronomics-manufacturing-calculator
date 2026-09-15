@@ -29,7 +29,7 @@ type InventoryPanelProps = {
 const cellTextClass = "py-1 border border-transparent";
 
 const runButtonClass =
-  "px-2 py-0.5 text-xs font-medium rounded bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap";
+  "px-2 py-0.5 text-sm font-medium rounded bg-green-600 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 whitespace-nowrap";
 
 // 乗せている行の材料になる行は amber、乗せている行から作られる行は sky（パネル背景が blue-50 系なので薄い青は避ける）
 const relatedRowClass: { [kind in RelationKind]: string } = {
@@ -54,7 +54,7 @@ const relationBadgeClass: { [kind in RelationKind]: string } = {
 function RelationBadge({ kind, hoveredItem, locale }: { kind: RelationKind; hoveredItem: string; locale: Locale }) {
   const label = kind === "material" ? "material for" : "made from";
   return (
-    <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-medium whitespace-nowrap ${relationBadgeClass[kind]}`}>
+    <span className={`ml-2 px-1.5 py-0.5 rounded text-sm font-medium whitespace-nowrap ${relationBadgeClass[kind]}`}>
       {label} {getItemName(hoveredItem, locale)}
     </span>
   );
@@ -80,7 +80,7 @@ function RecipeTree({ uses, item, locale }: { uses: StepUse[]; item: string; loc
       {recipe.outputs.map((output) => (
         <div key={output.item}>
           <TreeItem stack={output} item={item} locale={locale} />
-          <span className="text-xs text-gray-500">with {getMachineName(recipe.machine, locale)}</span>
+          <span className="text-sm text-gray-500">with {getMachineName(recipe.machine, locale)}</span>
         </div>
       ))}
       {recipe.inputs.map((input, index) => (
@@ -89,7 +89,7 @@ function RecipeTree({ uses, item, locale }: { uses: StepUse[]; item: string; loc
           <TreeItem stack={input} item={item} locale={locale} />
         </div>
       ))}
-      <div className="text-xs text-gray-500 px-1">for {getEntryTitle(entry, locale)}</div>
+      <div className="text-sm text-gray-500 px-1">for {getEntryTitle(entry, locale)}</div>
     </div>
   ));
 }
@@ -155,12 +155,12 @@ export function InventoryPanel({
 
   return (
     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6 border-2 border-blue-200">
-      <h2 className="text-xl font-bold mb-1 text-gray-900">Materials &amp; Inventory</h2>
-      <p className="text-sm text-gray-600 mb-4">
+      <h2 className="text-2xl font-bold mb-1 text-gray-900">Materials &amp; Inventory</h2>
+      <p className="text-base text-gray-600 mb-4">
         Enter what you have. Required is the total for all incomplete entries in your plan, including intermediates your
         remaining steps will craft.
       </p>
-      <table className="w-full table-fixed text-sm">
+      <table className="w-full table-fixed text-base">
         <colgroup>
           <col />
           <col className="w-20" />
@@ -168,7 +168,7 @@ export function InventoryPanel({
           <col className="w-20" />
         </colgroup>
         <thead>
-          <tr className="text-left text-xs text-gray-500 uppercase tracking-wide">
+          <tr className="text-left text-sm text-gray-500 uppercase tracking-wide">
             <th className="py-1 pr-2 font-medium">Item</th>
             <th className="py-1 px-1 font-medium text-right">Required</th>
             <th className="py-1 px-1 font-medium text-right">Have</th>
@@ -190,7 +190,7 @@ export function InventoryPanel({
               <Fragment key={row.item}>
                 {startsGroup && (
                   <tr>
-                    <td colSpan={4} className="pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <td colSpan={4} className="pt-3 pb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">
                       {row.crafted ? "Craft" : "Collect"}
                     </td>
                   </tr>
@@ -214,7 +214,7 @@ export function InventoryPanel({
                         {crafts.map((craft) => (
                           <div
                             key={`${craft.entry.id}:${craft.stepIndex}`}
-                            className="flex items-center gap-2 flex-wrap text-xs"
+                            className="flex items-center gap-2 flex-wrap text-sm"
                             title={`${getEntryTitle(craft.entry, locale)} · ${formatItemStacks(craft.recipe.inputs, locale)} → ${formatItemStacks(craft.recipe.outputs, locale)}`}
                           >
                             <span className="text-green-700">
@@ -251,7 +251,7 @@ export function InventoryPanel({
                       value={row.have}
                       aria-label={`Have ${row.item}`}
                       onChange={(e) => onUpdateInventory(row.item, Number(e.target.value))}
-                      className="w-full px-1.5 py-1 text-sm text-right font-mono border border-gray-300 rounded bg-white"
+                      className="w-full px-1.5 py-1 text-base text-right font-mono border border-gray-300 rounded bg-white"
                     />
                   </td>
                   <td className="py-1.5 px-1 text-right font-mono font-bold whitespace-nowrap">

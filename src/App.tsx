@@ -122,7 +122,7 @@ export const App = () => {
           {/* Center Column: Details */}
           <div className="space-y-6">
             {selection === null && (
-              <div className="bg-white rounded-lg shadow-md p-6 text-gray-500 text-sm">
+              <div className="bg-white rounded-lg shadow-md p-6 text-gray-500 text-base">
                 Select an item or upgrade from the list.
               </div>
             )}
@@ -188,7 +188,7 @@ export const App = () => {
         </div>
 
         {/* Footer */}
-        <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-500">
+        <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
           <div className="space-y-1">
             <div>Compatible with Astronomics version 0.83.1</div>
             <div>

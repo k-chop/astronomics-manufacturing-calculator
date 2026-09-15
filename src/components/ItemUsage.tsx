@@ -20,15 +20,15 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="text-lg font-semibold mb-4">Used in</div>
+      <div className="text-xl font-semibold mb-4">Used in</div>
 
       {recipeUsages.length === 0 && upgradeUsages.length === 0 && (
-        <p className="text-sm text-gray-500">This item is not used in any recipe or upgrade.</p>
+        <p className="text-base text-gray-500">This item is not used in any recipe or upgrade.</p>
       )}
 
       {recipeUsages.length > 0 && (
         <div className="mb-4">
-          <div className="font-semibold mb-2 text-sm text-gray-700">Recipes:</div>
+          <div className="font-semibold mb-2 text-base text-gray-700">Recipes:</div>
           <div className="space-y-2">
             {recipeUsages.map((usage) => (
               <button
@@ -40,10 +40,10 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-blue-700">{getItemName(usage.outputItem, locale)}</span>
                   {usage.viaAlias && (
-                    <span className="text-xs text-gray-500">as {getItemName(usage.viaAlias, locale)}</span>
+                    <span className="text-sm text-gray-500">as {getItemName(usage.viaAlias, locale)}</span>
                   )}
                 </div>
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="text-sm text-gray-600 mt-1">
                   {formatRecipe(
                     {
                       machine: usage.method.machine,
@@ -62,7 +62,7 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
 
       {upgradeUsages.length > 0 && (
         <div>
-          <div className="font-semibold mb-2 text-sm text-gray-700">Upgrades:</div>
+          <div className="font-semibold mb-2 text-base text-gray-700">Upgrades:</div>
           <div className="space-y-2">
             {upgradeUsages.map((usage) => (
               <button
@@ -74,7 +74,7 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
                 <span className="font-medium text-purple-700">
                   {getUpgradeName(usage.upgradeId, locale)} Lv{usage.level}
                 </span>
-                <span className="text-xs text-gray-600 ml-2">
+                <span className="text-sm text-gray-600 ml-2">
                   {getItemName(itemId, locale)} ×{formatNumber(usage.amount)}
                 </span>
               </button>

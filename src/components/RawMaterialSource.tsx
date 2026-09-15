@@ -18,20 +18,20 @@ export function RawMaterialSource({ itemId, locale = "en" }: RawMaterialSourcePr
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border-2 border-green-200">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-lg font-semibold flex items-center">
+        <div className="text-xl font-semibold flex items-center">
           {getItemName(itemId, locale)}
           <span className="text-green-600">
             <RawMaterialIcon />
           </span>
         </div>
-        <div className="text-sm text-gray-600">{getRawMaterialCategoryName(rawMaterial.category, locale)}</div>
+        <div className="text-base text-gray-600">{getRawMaterialCategoryName(rawMaterial.category, locale)}</div>
       </div>
       {rawMaterial.foundOn.length === 0 ? (
-        <p className="text-sm text-gray-500">No collection location is recorded for this item.</p>
+        <p className="text-base text-gray-500">No collection location is recorded for this item.</p>
       ) : (
         <div>
           <div className="font-semibold mb-2">Found on:</div>
-          <div className="text-sm text-gray-700">
+          <div className="text-base text-gray-700">
             <FoundOnList foundOn={rawMaterial.foundOn} locale={locale} mutedClassName="text-gray-500" />
           </div>
         </div>
