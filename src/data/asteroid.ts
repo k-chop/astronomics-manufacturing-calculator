@@ -42,7 +42,7 @@ const compositionNames = {
   silicate: { en: "Silicate" },
 } as const;
 
-type Composition = keyof typeof compositionNames;
+export type Composition = keyof typeof compositionNames;
 
 // 組成指定（"carbonite-asteroids" など）→ 組成
 const compositionByGenericId = {
@@ -107,6 +107,23 @@ export function resolveLocation(location: AsteroidName): CollectionSite[] {
   if (location === "any") return [{ kind: "any" }];
   const composition = compositionByGenericId[location];
   return asteroidIds.filter((id) => asteroids[id].composition === composition).map((id) => ({ kind: "asteroid", id }));
+}
+
+/**
+ * 組成指定（"metallic-asteroids" など）ならその組成、それ以外なら undefined
+ */
+export function getGenericComposition(location: AsteroidName): Composition | undefined {
+  return location in compositionByGenericId
+    ? compositionByGenericId[location as keyof typeof compositionByGenericId]
+    : undefined;
+}
+
+export function getAsteroidComposition(id: AsteroidId): Composition {
+  return asteroids[id].composition;
+}
+
+export function getCompositionName(composition: Composition, locale: Locale = "en"): string {
+  return compositionNames[composition][locale];
 }
 
 export function getAsteroidInfo(

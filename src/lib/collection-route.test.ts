@@ -38,6 +38,7 @@ describe("buildCollectionRoute", () => {
     expect(route.stops).toEqual([
       {
         id: "BT2",
+        anyOf: null,
         items: [
           { item: "nickel", missing: 10 },
           { item: "copper", missing: 4 },
@@ -65,8 +66,46 @@ describe("buildCollectionRoute", () => {
   });
 
   it("同数で不足数も同じならテーブル順で先の小惑星になる", () => {
-    const route = buildCollectionRoute([row("carbon", 50)]);
-    expect(stopSummary(route)).toEqual([["CC1", ["carbon"]]]);
+    // nickel: CC1, CC4, MM2, TW2, BT2, NC2 / gold: TW4, BT2 / amazonite: MM3, TW2, CV4
+    // TW2（nickel + amazonite）と BT2（nickel + gold）が同点でテーブル順の TW2。残る gold は TW4 と BT2 が同点で TW4
+    const route = buildCollectionRoute([row("nickel", 10), row("gold", 10), row("amazonite", 10)]);
+    expect(stopSummary(route)).toEqual([
+      ["TW2", ["nickel", "amazonite"]],
+      ["TW4", ["gold"]],
+    ]);
+  });
+
+  it("組成指定のものだけの停泊地は anyOf にその組成が入り、ガスの bonus は付かない", () => {
+    // carbon は炭素質ならどこでも。argon-gas は MM2（炭素質）に出現するが、代表の CC1 は特定の小惑星ではないので bonus なし
+    const route = buildCollectionRoute([row("carbon", 50), row("argon-gas", 3)]);
+    expect(route.stops).toEqual([
+      { id: "CC1", anyOf: "carbonite", items: [{ item: "carbon", missing: 50 }], bonus: [] },
+    ]);
+  });
+
+  it("組成が違う組成指定のものは別々の anyOf 停泊地になる", () => {
+    // 同点なので不足数の多い iron が先
+    const route = buildCollectionRoute([row("iron", 90), row("silica", 30)]);
+    expect(route.stops.map((stop) => [stop.anyOf, stop.items.map((siteItem) => siteItem.item)])).toEqual([
+      ["metallic", ["iron"]],
+      ["silicate", ["silica"]],
+    ]);
+  });
+
+  it("個別指定のものと同じ停泊地で拾えるなら組成指定のものもそこに載り、anyOf にはならない", () => {
+    // nickel: CC1, CC4, MM2, TW2, BT2, NC2 のうち金属質は CC4, BT2, NC2 → iron と合わせて CC4
+    const route = buildCollectionRoute([row("nickel", 10), row("iron", 30)]);
+    expect(route.stops).toEqual([
+      {
+        id: "CC4",
+        anyOf: null,
+        items: [
+          { item: "nickel", missing: 10 },
+          { item: "iron", missing: 30 },
+        ],
+        bonus: [],
+      },
+    ]);
   });
 
   it("Biomass は停泊地にはならず anywhere に入る", () => {
@@ -79,7 +118,7 @@ describe("buildCollectionRoute", () => {
     // sapphire: MM2, MM3, CV3 / argon-gas: MM2, CV1, argon-gas-nebula
     const route = buildCollectionRoute([row("sapphire", 2), row("argon-gas", 3)]);
     expect(route.stops).toEqual([
-      { id: "MM2", items: [{ item: "sapphire", missing: 2 }], bonus: [{ item: "argon-gas", missing: 3 }] },
+      { id: "MM2", anyOf: null, items: [{ item: "sapphire", missing: 2 }], bonus: [{ item: "argon-gas", missing: 3 }] },
     ]);
     expect(route.nebulae).toEqual([{ id: "argon-gas-nebula", items: [{ item: "argon-gas", missing: 3 }] }]);
   });

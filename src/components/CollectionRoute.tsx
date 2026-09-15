@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 
-import { type AsteroidName, getAsteroidInfo } from "../data/asteroid";
+import { type AsteroidName, type Composition, getAsteroidInfo, getCompositionName } from "../data/asteroid";
 import { getItemName, type Locale } from "../data/item-names";
 import type { CollectionRoute as CollectionRouteData, SiteItem } from "../lib/collection-route";
 import { formatNumber } from "../lib/format-utils";
@@ -24,34 +24,33 @@ function SiteItems({ items, locale }: { items: SiteItem[]; locale: Locale }) {
   );
 }
 
+const placeClass = "whitespace-nowrap font-medium text-gray-900";
+
 /**
- * 場所の名前。小惑星なら FoundOnList と同じ列構成（ID - リージョン (組成)）、星雲や any なら名前だけ
+ * 場所の名前。小惑星なら「CC4 - Cube Corp」、星雲や any なら名前だけ
  */
 function SiteName({ id, locale }: { id: AsteroidName; locale: Locale }) {
   const info = getAsteroidInfo(id, locale);
-  if (info.region && info.compositon) {
-    return (
-      <span className="flex gap-2 whitespace-nowrap text-gray-900">
-        <span className="font-mono inline-block w-9">{info.name}</span>
-        <span>-</span>
-        <span className="inline-block min-w-32">{info.region}</span>
-        <span className="text-gray-500">({info.compositon})</span>
-      </span>
-    );
-  }
-  return <span className="whitespace-nowrap text-gray-900">{info.name}</span>;
+  return <span className={placeClass}>{info.region === undefined ? info.name : `${info.name} - ${info.region}`}</span>;
 }
 
 /**
- * 経路の 1 行。number があれば停泊順を付ける
+ * 「その組成の小惑星ならどこでもよい」停泊地の名前
  */
-function RouteLine({ number, children }: { number?: number; children: ReactNode }) {
+function AnyAsteroidName({ composition, locale }: { composition: Composition; locale: Locale }) {
+  return <span className={placeClass}>Any {getCompositionName(composition, locale)} asteroid</span>;
+}
+
+/**
+ * 経路の 1 行（番号・場所・材料の 3 列）。親の grid に列を流し込むので li 自体は contents にする
+ * number があれば停泊順を付ける
+ */
+function RouteLine({ number, place, children }: { number?: number; place: ReactNode; children: ReactNode }) {
   return (
-    <li className="flex flex-wrap gap-x-2 gap-y-0.5">
-      <span className="font-mono inline-block w-5 text-right text-gray-500">
-        {number === undefined ? "" : `${number}.`}
-      </span>
-      {children}
+    <li className="contents">
+      <span className="font-mono text-right text-gray-500">{number === undefined ? "" : `${number}.`}</span>
+      {place}
+      <span className="flex flex-wrap gap-x-2">{children}</span>
     </li>
   );
 }
@@ -79,10 +78,19 @@ export function CollectionRoute({ route, locale = "en" }: CollectionRouteProps) 
         </label>
       </div>
       {showRoute && (
-        <ol className="space-y-0.5">
-          {stops.map(({ id, items, bonus }, index) => (
-            <RouteLine key={id} number={index + 1}>
-              <SiteName id={id} locale={locale} />
+        <ol className="grid grid-cols-[max-content_max-content_1fr] gap-x-3 gap-y-0.5 items-baseline">
+          {stops.map(({ id, anyOf, items, bonus }, index) => (
+            <RouteLine
+              key={id}
+              number={index + 1}
+              place={
+                anyOf === null ? (
+                  <SiteName id={id} locale={locale} />
+                ) : (
+                  <AnyAsteroidName composition={anyOf} locale={locale} />
+                )
+              }
+            >
               <SiteItems items={items} locale={locale} />
               {bonus.length > 0 && (
                 <span className="text-sm text-gray-500 whitespace-nowrap">
@@ -92,14 +100,12 @@ export function CollectionRoute({ route, locale = "en" }: CollectionRouteProps) 
             </RouteLine>
           ))}
           {nebulae.map(({ id, items }, index) => (
-            <RouteLine key={id} number={stops.length + index + 1}>
-              <SiteName id={id} locale={locale} />
+            <RouteLine key={id} number={stops.length + index + 1} place={<SiteName id={id} locale={locale} />}>
               <SiteItems items={items} locale={locale} />
             </RouteLine>
           ))}
           {anywhere.length > 0 && (
-            <RouteLine>
-              <span className="text-gray-900">Any asteroid along the way</span>
+            <RouteLine place={<span className={placeClass}>Any asteroid along the way</span>}>
               <SiteItems items={anywhere} locale={locale} />
             </RouteLine>
           )}
