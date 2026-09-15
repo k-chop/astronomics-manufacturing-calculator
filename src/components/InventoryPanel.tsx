@@ -9,6 +9,7 @@ import { getEntryTitle } from "../lib/plan-format";
 import {
   getRelatedRows,
   type InventoryRow,
+  isRowSatisfied,
   type ItemRelations,
   type ReadyCraft,
   type RelationKind,
@@ -153,7 +154,7 @@ type InventoryRowViewProps = {
 };
 
 /**
- * 在庫パネルの 1 行（アイテム名・実行できるステップ・必要数・在庫・不足）
+ * 在庫パネルの 1 行（アイテム名・実行できるステップ・必要数・在庫・不足）。在庫が必要数に達した行は薄く出す
  * 集めるものの不足数字は乗せると「Collected」に変わり、押すと Have を Required にする
  */
 function InventoryRowView({
@@ -170,7 +171,7 @@ function InventoryRowView({
 }: InventoryRowViewProps) {
   return (
     <tr
-      className={`border-t border-blue-100 align-top ${getRowClass(row.item, hoveredItem, relatedKind)}`}
+      className={`border-t border-blue-100 align-top ${isRowSatisfied(row) ? "opacity-60" : ""} ${getRowClass(row.item, hoveredItem, relatedKind)}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

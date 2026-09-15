@@ -396,6 +396,22 @@ describe("analyzePlan の rows", () => {
   });
 });
 
+describe("analyzePlan の rows の並び", () => {
+  it("グループ内では在庫が必要数に達した行が末尾に送られ、それ以外は必要数の降順のまま", () => {
+    // manufacturing Lv1: cobalt 800, iron 1000 / scanner-array Lv2: magnesite 650, silver 650（すべて集めるもの）
+    let plan = addUpgradeToPlan(emptyProductionPlan, "manufacturing", 1);
+    plan = addUpgradeToPlan(plan, "scanner-array", 2);
+    plan = setInventory(plan, "iron", 1000);
+    plan = setInventory(plan, "magnesite", 650);
+
+    expect(analyzePlan(plan).rows.map((row) => row.item)).toEqual(["cobalt", "silver", "iron", "magnesite"]);
+
+    // 在庫を減らせば元の位置に戻る
+    plan = setInventory(plan, "iron", 999);
+    expect(analyzePlan(plan).rows.map((row) => row.item)).toEqual(["iron", "cobalt", "silver", "magnesite"]);
+  });
+});
+
 describe("analyzePlan の rows と中間材料", () => {
   it("残りステップで作る中間材料も行に出て、作れる分は missing に数えない", () => {
     // Shuttle Equipment Delivery Lv1: Fiber Optic Strands 400 ← Gem Dust 400 ← Any Gem 400
@@ -486,15 +502,16 @@ describe("analyzePlan の crafts", () => {
   it("item エントリの最終成果物は行に出て、途中まで作った分は在庫として数えられる", () => {
     let plan = graphitePlan({ carbon: 100 });
     const id = plan.items[0].id;
+    // carbon は在庫で満たされているので末尾に送られる
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "carbon", required: 100, have: 100, missing: 0, crafted: true },
       { item: "graphite", required: 20, have: 0, missing: 0, crafted: true },
+      { item: "carbon", required: 100, have: 100, missing: 0, crafted: true },
     ]);
 
     plan = recordStepRuns(plan, id, 0, 1);
     expect(analyzePlan(plan).rows).toEqual([
-      { item: "carbon", required: 50, have: 50, missing: 0, crafted: true },
       { item: "graphite", required: 20, have: 10, missing: 0, crafted: true },
+      { item: "carbon", required: 50, have: 50, missing: 0, crafted: true },
     ]);
   });
 });

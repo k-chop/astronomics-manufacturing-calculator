@@ -341,6 +341,13 @@ export type InventoryRow = {
   crafted: boolean; // 未完了エントリのいずれかのステップで作るもの（false なら集めてくるもの）
 };
 
+/**
+ * 在庫が必要数に達している行（在庫パネルで ✓ が出る行）
+ */
+export function isRowSatisfied(row: InventoryRow): boolean {
+  return row.have >= row.required;
+}
+
 export type ReadyCraft = {
   entry: ProductionPlanEntry;
   stepIndex: number;
@@ -381,6 +388,7 @@ type AnalyzedEntry = { entry: ProductionPlanEntry; analysis: EntryAnalysis };
 /**
  * 在庫パネルの行: 未完了エントリが要求するもの（残りステップで作る中間材料も含む）
  * 集めてくるもの（どのステップでも作らないもの）を先に、作るものを後に、それぞれ必要数の降順で並べる
+ * 各グループ内では在庫が必要数に達した行を末尾に送る（片付いたものが上に残らないように）
  * missing は各プランの残りステップで作れる分を差し引いた不足。どのプランも使わない材料は在庫に残っていても表示しない
  */
 function buildInventoryRows(inventory: Inventory, pending: AnalyzedEntry[]): InventoryRow[] {
@@ -407,7 +415,12 @@ function buildInventoryRows(inventory: Inventory, pending: AnalyzedEntry[]): Inv
         crafted: craftedItems.has(item),
       };
     })
-    .toSorted((a, b) => Number(a.crafted) - Number(b.crafted) || b.required - a.required);
+    .toSorted(
+      (a, b) =>
+        Number(a.crafted) - Number(b.crafted) ||
+        Number(isRowSatisfied(a)) - Number(isRowSatisfied(b)) ||
+        b.required - a.required,
+    );
 }
 
 function collectReadyCrafts(pending: AnalyzedEntry[]): ReadyCraft[] {
