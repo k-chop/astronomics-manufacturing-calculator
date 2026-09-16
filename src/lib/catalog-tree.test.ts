@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { aliases } from "../data/aliases";
+import { contracts } from "../data/contracts";
 import { itemNames } from "../data/item-names";
 import { upgrades } from "../data/upgrades";
 import { buildCatalogTree, filterTree, getSelectionId, type TreeLeaf, type TreeNode } from "./catalog-tree";
@@ -19,8 +20,20 @@ describe("buildCatalogTree", () => {
   const tree = buildCatalogTree();
   const leaves = collectLeaves(tree);
 
-  it("ルートは Items と Upgrades", () => {
+  it("ルートは Items と Upgrades で、契約を出す設定なら Contracts が末尾に付く", () => {
     expect(tree.map((node) => node.label)).toEqual(["Items", "Upgrades"]);
+    expect(buildCatalogTree("en", true).map((node) => node.label)).toEqual(["Items", "Upgrades", "Contracts"]);
+  });
+
+  it("契約を出す設定なら全契約が駅ごとに葉として現れ、ラベルに番号が付く", () => {
+    const contractLeaves = collectLeaves(buildCatalogTree("en", true));
+    const byId = new Map(contractLeaves.map(({ leaf, path }) => [leaf.id, { leaf, path }]));
+    for (const contract of contracts) {
+      const id = getSelectionId({ kind: "contract", contractId: contract.id });
+      expect(byId.has(id), `${id} がツリーにない`).toBe(true);
+      expect(byId.get(id)?.path.at(-1)).toBe(`contracts/${contract.station}`);
+    }
+    expect(byId.get("contract:noblecore-ag-2")?.leaf.label).toBe("#2 Raw Chromite Delivery");
   });
 
   it("エイリアス以外の全アイテムが葉として現れる", () => {
@@ -120,6 +133,18 @@ describe("filterTree", () => {
       "upgrade:manufacturing:3",
     ]);
     expect(filterTree(tree, "carbonator")).toEqual([]);
+  });
+
+  it("契約は納品物の名前でもマッチする", () => {
+    const withContracts = buildCatalogTree("en", true);
+    expect(collectLeaves(filterTree(withContracts, "chromite")).map(({ leaf }) => leaf.id)).toEqual([
+      "item:chromite",
+      "contract:noblecore-ag-2",
+    ]);
+    expect(collectLeaves(filterTree(withContracts, "contract pirate")).map(({ leaf }) => leaf.id)).toEqual([
+      "contract:tw-gems-6",
+      "contract:ceres-vesta-5",
+    ]);
   });
 
   it("何もマッチしなければ空配列", () => {

@@ -118,6 +118,9 @@ export const itemNames: ItemNamesMap = {
   "trajectory-research": { en: "Trajectory Research" },
   "conductivity-research": { en: "Conductivity Research" },
   "panspermia-research": { en: "Panspermia Research" },
+
+  // Misc.
+  "pirate-core": { en: "Pirate Core" },
 };
 
 export function getItemName(itemId: string, locale: string = "en"): string {

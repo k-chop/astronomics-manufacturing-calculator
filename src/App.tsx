@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
 
 import { CatalogTree } from "./components/CatalogTree";
+import { ContractResult } from "./components/ContractResult";
 import { GitHubIcon } from "./components/GitHubIcon";
 import { InventoryPanel } from "./components/InventoryPanel";
 import { ItemUsage } from "./components/ItemUsage";
 import { ManufacturingResult } from "./components/ManufacturingResult";
 import { ProductionPlanList } from "./components/ProductionPlanList";
 import { RawMaterialSource } from "./components/RawMaterialSource";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { UpgradeResult } from "./components/UpgradeResult";
 import { calculateManufacturing } from "./lib/calculator";
 import { getSelectionId, type Selection } from "./lib/catalog-tree";
 import { loadProductionPlan, saveProductionPlan } from "./lib/production-plan-storage";
 import {
+  addContractToPlan,
   addItemToPlan,
   addUpgradeToPlan,
   analyzePlan,
@@ -21,11 +24,13 @@ import {
   toggleItemCompletion,
 } from "./lib/production-plan-utils";
 import { getMinimumAmount } from "./lib/recipe-utils";
+import { loadShowContracts, saveShowContracts } from "./lib/ui-preferences-storage";
 import type { ProductionPlan } from "./types/production-plan";
 
 export const App = () => {
   const [selection, setSelection] = useState<Selection | null>(null);
   const [amount, setAmount] = useState<number>(1);
+  const [showContracts, setShowContracts] = useState<boolean>(() => loadShowContracts());
   const [productionPlan, setProductionPlan] = useState<ProductionPlan>(() => {
     // 初期値としてlocalStorageから読み込む
     return loadProductionPlan();
@@ -46,9 +51,20 @@ export const App = () => {
 
   const handleItemSelect = (itemId: string) => handleSelect({ kind: "item", itemId });
   const handleUpgradeSelect = (upgradeId: string, level: number) => handleSelect({ kind: "upgrade", upgradeId, level });
+  const handleContractSelect = (contractId: string) => handleSelect({ kind: "contract", contractId });
+
+  // 契約を隠したら、選択中の契約も閉じる
+  const handleShowContractsChange = (show: boolean) => {
+    setShowContracts(show);
+    saveShowContracts(show);
+    if (!show && selection?.kind === "contract") {
+      setSelection(null);
+    }
+  };
 
   const selectedItem = selection?.kind === "item" ? selection.itemId : null;
   const selectedUpgrade = selection?.kind === "upgrade" ? selection : null;
+  const selectedContract = selection?.kind === "contract" ? selection.contractId : null;
 
   // 計算結果は選択中アイテムと個数から導出する
   const results = useMemo(
@@ -78,6 +94,12 @@ export const App = () => {
     }
   };
 
+  const handleAddContractToPlan = () => {
+    if (selectedContract) {
+      updateProductionPlan(addContractToPlan(productionPlan, selectedContract));
+    }
+  };
+
   const handleRemoveFromPlan = (entryId: string) => {
     updateProductionPlan(removeItemFromPlan(productionPlan, entryId));
   };
@@ -101,29 +123,36 @@ export const App = () => {
       <div className="max-w-[1920px] mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold text-gray-900">Astronomics Manufacturing Calculator</h1>
-          <a
-            href="https://github.com/k-chop/astronomics-manufacturing-calculator"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-700 hover:text-gray-900 transition-colors"
-          >
-            <span className="sr-only">GitHub Repository</span>
-            <GitHubIcon />
-          </a>
+          <div className="flex items-center gap-4">
+            <SettingsDialog showContracts={showContracts} onShowContractsChange={handleShowContractsChange} />
+            <a
+              href="https://github.com/k-chop/astronomics-manufacturing-calculator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              <span className="sr-only">GitHub Repository</span>
+              <GitHubIcon />
+            </a>
+          </div>
         </div>
 
         {/* 3-column layout: Left (Catalog) + Center (Details) + Right (Production Plan) */}
         <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)_minmax(0,1fr)] gap-6">
           {/* Left Column: Catalog Tree */}
           <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-scroll">
-            <CatalogTree selectedId={selection ? getSelectionId(selection) : null} onSelect={handleSelect} />
+            <CatalogTree
+              selectedId={selection ? getSelectionId(selection) : null}
+              onSelect={handleSelect}
+              showContracts={showContracts}
+            />
           </div>
 
           {/* Center Column: Details */}
           <div className="space-y-6">
             {selection === null && (
               <div className="bg-white rounded-lg shadow-md p-6 text-gray-500 text-base">
-                Select an item or upgrade from the list.
+                Select something from the list.
               </div>
             )}
 
@@ -138,6 +167,9 @@ export const App = () => {
                 onAddToPlan={handleAddUpgradeToPlan}
               />
             )}
+
+            {/* Contract Requirements */}
+            {selectedContract && <ContractResult contractId={selectedContract} onAddToPlan={handleAddContractToPlan} />}
 
             {/* Manufacturing Results */}
             {results && selectedItem && (
@@ -160,6 +192,8 @@ export const App = () => {
                   itemId={selectedItem}
                   onSelectItem={handleItemSelect}
                   onSelectUpgrade={handleUpgradeSelect}
+                  onSelectContract={handleContractSelect}
+                  showContracts={showContracts}
                 />
               </>
             )}

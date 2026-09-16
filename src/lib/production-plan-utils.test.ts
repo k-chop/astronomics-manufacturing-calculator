@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { ProductionPlan } from "../types/production-plan";
 import { calculateManufacturing } from "./calculator";
+import { getEntryTitle } from "./plan-format";
 import { parseProductionPlan } from "./production-plan-storage";
 import {
+  addContractToPlan,
   addItemToPlan,
   addUpgradeToPlan,
   analyzeEntry,
@@ -12,7 +14,7 @@ import {
   getEntrySteps,
   getRelatedRows,
   analyzePlan,
-  getUpgradeRequirementMaterials,
+  getRequirementMaterials,
   isMaterialsCovered,
   recordStepRuns,
   removeItemFromPlan,
@@ -120,9 +122,45 @@ describe("addUpgradeToPlan", () => {
   });
 });
 
-describe("getUpgradeRequirementMaterials", () => {
+describe("addContractToPlan", () => {
+  it("原材料の納品はステップを持たず、そのまま必要数になる: Raw Chromite Delivery", () => {
+    const plan = addContractToPlan(emptyProductionPlan, "noblecore-ag-2");
+    const entry = plan.items[0];
+
+    expect(entry.kind).toBe("contract");
+    expect(entry.stepProgress).toEqual([]);
+    expect(analyzeEntry(entry, {}).materials).toEqual([{ item: "chromite", need: 5000, have: 0, shortage: 5000 }]);
+    expect(getEntryTitle(entry)).toBe("Raw Chromite Delivery");
+  });
+
+  it("レシピ持ちの納品は原材料まで展開される: Plastics Delivery", () => {
+    const plan = addContractToPlan(emptyProductionPlan, "black-tidal-1");
+    const entry = plan.items[0];
+
+    if (entry.kind !== "contract") throw new Error("contract エントリではない");
+    expect(entry.requirements).toHaveLength(1);
+    expect(entry.requirements[0].calculationResults).not.toBeNull();
+    expect(entry.stepProgress.length).toBeGreaterThan(0);
+    expect(analyzeEntry(entry, {}).materials.map((status) => status.item)).not.toContain("plastics");
+  });
+
+  it("原材料かつレシピ持ちの納品（Salt）は展開せず直接採取扱いになる: Raw Salt Delivery", () => {
+    const plan = addContractToPlan(emptyProductionPlan, "medusa-minerals-3");
+    const entry = plan.items[0];
+
+    if (entry.kind !== "contract") throw new Error("contract エントリではない");
+    expect(entry.requirements[0].calculationResults).toBeNull();
+    expect(analyzeEntry(entry, {}).materials).toEqual([{ item: "salt", need: 1000, have: 0, shortage: 1000 }]);
+  });
+
+  it("存在しない契約の場合は plan を変更しない", () => {
+    expect(addContractToPlan(emptyProductionPlan, "unknown-contract")).toBe(emptyProductionPlan);
+  });
+});
+
+describe("getRequirementMaterials", () => {
   it("原材料の要求と展開結果に同じアイテムがあれば合算される", () => {
-    const materials = getUpgradeRequirementMaterials([
+    const materials = getRequirementMaterials([
       { item: "carbon", amount: 100, calculationResults: null },
       // Graphite 50 → Carbon 250
       { item: "graphite", amount: 50, calculationResults: results("graphite", 50) },
@@ -303,6 +341,13 @@ describe("analyzeEntry の readyToFinish", () => {
     expect(analyzeEntry(entry, { chromite: 400, "fiber-optic-strands": 300 }).readyToFinish).toBe(true);
   });
 
+  it("contract は納品物が在庫にあれば ready", () => {
+    const plan = addContractToPlan(emptyProductionPlan, "noblecore-ag-2");
+    const entry = plan.items[0];
+    expect(analyzeEntry(entry, { chromite: 4999 }).readyToFinish).toBe(false);
+    expect(analyzeEntry(entry, { chromite: 5000 }).readyToFinish).toBe(true);
+  });
+
   it("item は最終レシピの残りをすべて今の在庫で実行できれば ready", () => {
     const plan = graphitePlan();
     const entry = plan.items[0];
@@ -336,6 +381,19 @@ describe("toggleItemCompletion", () => {
     plan = toggleItemCompletion(plan, id);
     expect(plan.items[0].completed).toBe(false);
     expect(plan.inventory).toEqual({ chromite: 500, "fiber-optic-strands": 300 });
+  });
+
+  it("contract を完了にすると納品物が在庫から減り、戻すと戻る", () => {
+    const plan = addContractToPlan({ ...emptyProductionPlan, inventory: { chromite: 6000 } }, "noblecore-ag-2");
+    const entryId = plan.items[0].id;
+
+    const completed = toggleItemCompletion(plan, entryId);
+    expect(completed.items[0].completed).toBe(true);
+    expect(completed.inventory).toEqual({ chromite: 1000 });
+
+    const reverted = toggleItemCompletion(completed, entryId);
+    expect(reverted.items[0].completed).toBe(false);
+    expect(reverted.inventory).toEqual({ chromite: 6000 });
   });
 
   it("item エントリは在庫を変えない", () => {

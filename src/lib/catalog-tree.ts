@@ -1,4 +1,5 @@
 import { aliases } from "../data/aliases";
+import { contracts, getContractName, getStationName, type Station, stationNames } from "../data/contracts";
 import { getItemName, type Locale } from "../data/item-names";
 import { getMachineName, machineNames } from "../data/machines";
 import {
@@ -20,7 +21,10 @@ import {
 /**
  * 中央ペインに表示する対象
  */
-export type Selection = { kind: "item"; itemId: string } | { kind: "upgrade"; upgradeId: string; level: number };
+export type Selection =
+  | { kind: "item"; itemId: string }
+  | { kind: "upgrade"; upgradeId: string; level: number }
+  | { kind: "contract"; contractId: string };
 
 export type TreeLeaf = {
   kind: "leaf";
@@ -41,7 +45,14 @@ export type TreeBranch = {
 export type TreeNode = TreeBranch | TreeLeaf;
 
 export function getSelectionId(selection: Selection): string {
-  return selection.kind === "item" ? `item:${selection.itemId}` : `upgrade:${selection.upgradeId}:${selection.level}`;
+  switch (selection.kind) {
+    case "item":
+      return `item:${selection.itemId}`;
+    case "upgrade":
+      return `upgrade:${selection.upgradeId}:${selection.level}`;
+    case "contract":
+      return `contract:${selection.contractId}`;
+  }
 }
 
 function itemLeaf(itemId: string, locale: Locale): TreeLeaf {
@@ -126,9 +137,43 @@ function buildUpgradesBranch(locale: Locale): TreeBranch {
 }
 
 /**
- * 左ペインに表示するカタログツリーを構築する
+ * 契約は駅ごとに number 順。納品物の名前も検索対象に入れる（"chromite" で契約も引っかかるように）
  */
-export function buildCatalogTree(locale: Locale = "en"): TreeBranch[] {
+function buildContractsBranch(locale: Locale): TreeBranch {
+  const stations = Object.keys(stationNames) as Station[];
+
+  return {
+    kind: "branch",
+    id: "contracts",
+    label: "Contracts",
+    children: stations.map((station) => ({
+      kind: "branch",
+      id: `contracts/${station}`,
+      label: getStationName(station, locale),
+      children: contracts
+        .filter((contract) => contract.station === station)
+        .toSorted((a, b) => a.number - b.number)
+        .map((contract) => {
+          const selection: Selection = { kind: "contract", contractId: contract.id };
+          return {
+            kind: "leaf",
+            id: getSelectionId(selection),
+            label: `#${contract.number} ${getContractName(contract.id, locale)}`,
+            selection,
+            isRaw: false,
+            searchText:
+              `contract ${getStationName(station, locale)} ${getContractName(contract.id, locale)} ${getItemName(contract.requirement.item, locale)} ${contract.id}`.toLowerCase(),
+          };
+        }),
+    })),
+  };
+}
+
+/**
+ * 左ペインに表示するカタログツリーを構築する
+ * showContracts が false なら契約は出さない（ゲーム内で順に開示されるもののネタバレ対策）
+ */
+export function buildCatalogTree(locale: Locale = "en", showContracts = false): TreeBranch[] {
   return [
     {
       kind: "branch",
@@ -137,6 +182,7 @@ export function buildCatalogTree(locale: Locale = "en"): TreeBranch[] {
       children: [buildRawMaterialBranch(locale), buildManufacturedBranch(locale)],
     },
     buildUpgradesBranch(locale),
+    ...(showContracts ? [buildContractsBranch(locale)] : []),
   ];
 }
 

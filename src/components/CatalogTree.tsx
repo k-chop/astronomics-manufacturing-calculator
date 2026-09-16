@@ -7,6 +7,7 @@ import { RawMaterialIcon } from "./RawMaterialIcon";
 type CatalogTreeProps = {
   selectedId: string | null;
   onSelect: (selection: Selection) => void;
+  showContracts: boolean; // false なら Contracts ブランチを出さない（ネタバレ対策の設定）
   locale?: Locale;
 };
 
@@ -78,11 +79,12 @@ function TreeNodeView({ node, depth, selectedId, collapsed, forceExpand, onToggl
   );
 }
 
-export function CatalogTree({ selectedId, onSelect, locale = "en" }: CatalogTreeProps) {
+export function CatalogTree({ selectedId, onSelect, showContracts, locale = "en" }: CatalogTreeProps) {
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
-  const tree = useMemo(() => buildCatalogTree(locale), [locale]);
+  const tree = useMemo(() => buildCatalogTree(locale, showContracts), [locale, showContracts]);
+  const filterLabel = showContracts ? "Filter items, upgrades and contracts" : "Filter items and upgrades";
   const visibleTree = useMemo(() => filterTree(tree, query), [tree, query]);
   const isFiltering = query.trim() !== "";
 
@@ -107,8 +109,8 @@ export function CatalogTree({ selectedId, onSelect, locale = "en" }: CatalogTree
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Filter items and upgrades..."
-            aria-label="Filter items and upgrades"
+            placeholder={`${filterLabel}...`}
+            aria-label={filterLabel}
             className="w-full px-3 py-2 pr-8 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {isFiltering && (
@@ -125,7 +127,7 @@ export function CatalogTree({ selectedId, onSelect, locale = "en" }: CatalogTree
       </div>
 
       {visibleTree.length === 0 ? (
-        <p className="text-base text-gray-500 px-6 pb-4">No items or upgrades match.</p>
+        <p className="text-base text-gray-500 px-6 pb-4">Nothing matches.</p>
       ) : (
         <div className="space-y-0.5 px-4 pb-4">
           {visibleTree.map((node) => (

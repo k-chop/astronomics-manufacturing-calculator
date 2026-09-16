@@ -1,29 +1,42 @@
+import { getContractName } from "../data/contracts";
 import { getItemName, type Locale } from "../data/item-names";
 import { getUpgradeName } from "../data/upgrades";
 import { formatDuration, formatNumber } from "../lib/format-utils";
-import { findRecipesUsingItem, findUpgradesRequiringItem } from "../lib/item-usage";
+import { findContractsRequiringItem, findRecipesUsingItem, findUpgradesRequiringItem } from "../lib/item-usage";
 import { formatRecipe } from "../lib/recipe-format";
 
 type ItemUsageProps = {
   itemId: string;
   onSelectItem: (itemId: string) => void;
   onSelectUpgrade: (upgradeId: string, level: number) => void;
+  onSelectContract: (contractId: string) => void;
+  showContracts: boolean; // false なら契約は出さない（ネタバレ対策の設定）
   locale?: Locale;
 };
 
 const rowClass =
   "w-full text-left border border-gray-200 rounded p-3 bg-gray-50 hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
-export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en" }: ItemUsageProps) {
+export function ItemUsage({
+  itemId,
+  onSelectItem,
+  onSelectUpgrade,
+  onSelectContract,
+  showContracts,
+  locale = "en",
+}: ItemUsageProps) {
   const recipeUsages = findRecipesUsingItem(itemId);
   const upgradeUsages = findUpgradesRequiringItem(itemId);
+  const contractUsages = showContracts ? findContractsRequiringItem(itemId) : [];
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="text-xl font-semibold mb-4">Used in</div>
 
-      {recipeUsages.length === 0 && upgradeUsages.length === 0 && (
-        <p className="text-base text-gray-500">This item is not used in any recipe or upgrade.</p>
+      {recipeUsages.length === 0 && upgradeUsages.length === 0 && contractUsages.length === 0 && (
+        <p className="text-base text-gray-500">
+          This item is not used in any recipe{showContracts ? ", upgrade or contract" : " or upgrade"}.
+        </p>
       )}
 
       {recipeUsages.length > 0 && (
@@ -61,7 +74,7 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
       )}
 
       {upgradeUsages.length > 0 && (
-        <div>
+        <div className={contractUsages.length > 0 ? "mb-4" : ""}>
           <div className="font-semibold mb-2 text-base text-gray-700">Upgrades:</div>
           <div className="space-y-2">
             {upgradeUsages.map((usage) => (
@@ -74,6 +87,27 @@ export function ItemUsage({ itemId, onSelectItem, onSelectUpgrade, locale = "en"
                 <span className="font-medium text-purple-700">
                   {getUpgradeName(usage.upgradeId, locale)} Lv{usage.level}
                 </span>
+                <span className="text-sm text-gray-600 ml-2">
+                  {getItemName(itemId, locale)} ×{formatNumber(usage.amount)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {contractUsages.length > 0 && (
+        <div>
+          <div className="font-semibold mb-2 text-base text-gray-700">Contracts:</div>
+          <div className="space-y-2">
+            {contractUsages.map((usage) => (
+              <button
+                type="button"
+                key={usage.contractId}
+                onClick={() => onSelectContract(usage.contractId)}
+                className={rowClass}
+              >
+                <span className="font-medium text-amber-700">{getContractName(usage.contractId, locale)}</span>
                 <span className="text-sm text-gray-600 ml-2">
                   {getItemName(itemId, locale)} ×{formatNumber(usage.amount)}
                 </span>

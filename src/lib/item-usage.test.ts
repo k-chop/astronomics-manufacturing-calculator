@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { findRecipesUsingItem, findUpgradesRequiringItem } from "./item-usage";
+import { findContractsRequiringItem, findRecipesUsingItem, findUpgradesRequiringItem } from "./item-usage";
 
 describe("findRecipesUsingItem", () => {
   it("直接入力に使うレシピを返す: copper → copper-wire", () => {
@@ -44,5 +44,22 @@ describe("findUpgradesRequiringItem", () => {
 
   it("どのアップグレードにも要求されない場合は空配列", () => {
     expect(findUpgradesRequiringItem("water")).toEqual([]);
+  });
+});
+
+describe("findContractsRequiringItem", () => {
+  it("納品物とする契約と数量を返す", () => {
+    expect(findContractsRequiringItem("chromite")).toEqual([{ contractId: "noblecore-ag-2", amount: 5000 }]);
+  });
+
+  it("複数の契約で要求される場合はすべて返す: pirate-core", () => {
+    expect(findContractsRequiringItem("pirate-core")).toEqual([
+      { contractId: "tw-gems-6", amount: 10 },
+      { contractId: "ceres-vesta-5", amount: 40 },
+    ]);
+  });
+
+  it("どの契約にも要求されない場合は空配列", () => {
+    expect(findContractsRequiringItem("water")).toEqual([]);
   });
 });

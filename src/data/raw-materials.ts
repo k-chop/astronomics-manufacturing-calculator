@@ -1,7 +1,7 @@
 import type { AsteroidName } from "./asteroid";
 import type { Locale, LocalizedNames } from "./item-names";
 
-export type RawMaterialCategory = "surface" | "minerals" | "gems" | "liquids" | "gases" | "data";
+export type RawMaterialCategory = "surface" | "minerals" | "gems" | "liquids" | "gases" | "data" | "misc";
 
 export const rawMaterialCategoryNames: { [category in RawMaterialCategory]: LocalizedNames } = {
   surface: { en: "Surface Resources" },
@@ -10,6 +10,7 @@ export const rawMaterialCategoryNames: { [category in RawMaterialCategory]: Loca
   liquids: { en: "Liquids" },
   gases: { en: "Gases" },
   data: { en: "Data" },
+  misc: { en: "Misc." },
 };
 
 export function getRawMaterialCategoryName(category: RawMaterialCategory, locale: Locale = "en"): string {
@@ -335,6 +336,13 @@ export const rawMaterials: RawMaterialMap = {
     id: "meteorite-data",
     category: "data",
     foundOn: ["CV2"],
+  },
+
+  // Misc. (dropped by pirates, no collection site)
+  "pirate-core": {
+    id: "pirate-core",
+    category: "misc",
+    foundOn: [],
   },
 };
 

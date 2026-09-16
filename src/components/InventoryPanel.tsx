@@ -130,7 +130,7 @@ function RelationsTooltip({ item, relations, locale }: { item: string; relations
             {usedFor.map(({ entry, amount }) => (
               <div key={entry.id}>
                 {getEntryTitle(entry, locale)}
-                {entry.kind === "upgrade" && <span className="text-gray-500"> ×{formatNumber(amount)}</span>}
+                {entry.kind !== "item" && <span className="text-gray-500"> ×{formatNumber(amount)}</span>}
               </div>
             ))}
           </div>

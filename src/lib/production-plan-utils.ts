@@ -1,13 +1,15 @@
+import { getContract } from "../data/contracts";
 import { isRawMaterial } from "../data/raw-materials";
 import type { ItemStack } from "../data/recipes";
 import { getUpgradeLevel } from "../data/upgrades";
 import type {
   Inventory,
+  PlanRequirement,
   ProductionPlan,
+  ProductionPlanContract,
   ProductionPlanEntry,
   ProductionPlanItem,
   ProductionPlanUpgrade,
-  UpgradeRequirement,
 } from "../types/production-plan";
 import type { CalculationRecipe, CalculationResult } from "./calculator";
 import { calculateManufacturing, mergeItemStacks } from "./calculator";
@@ -23,9 +25,9 @@ export function generateId(): string {
 export const emptyProductionPlan: ProductionPlan = { items: [], inventory: {} };
 
 /**
- * アップグレードの要求資源を原材料まで展開して合算する
+ * アップグレード / 契約の要求資源を原材料まで展開して合算する
  */
-export function getUpgradeRequirementMaterials(requirements: UpgradeRequirement[]): ItemStack[] {
+export function getRequirementMaterials(requirements: PlanRequirement[]): ItemStack[] {
   return mergeItemStacks(
     requirements.flatMap((requirement) =>
       requirement.calculationResults === null
@@ -36,10 +38,10 @@ export function getUpgradeRequirementMaterials(requirements: UpgradeRequirement[
 }
 
 /**
- * アップグレードの要求資源を計算結果付きに変換する
+ * アップグレード / 契約の要求資源を計算結果付きに変換する
  * 原材料（Carbon や Biomass のようにレシピも持つものを含む）は直接採取するものとして展開しない
  */
-export function resolveUpgradeRequirements(requirements: ItemStack[]): UpgradeRequirement[] {
+export function resolveRequirements(requirements: ItemStack[]): PlanRequirement[] {
   return requirements.map((requirement) => ({
     item: requirement.item,
     amount: requirement.amount,
@@ -50,22 +52,22 @@ export function resolveUpgradeRequirements(requirements: ItemStack[]): UpgradeRe
 }
 
 /**
- * アップグレードの製造ステップ一覧: 各要求資源の最速パターンのレシピを連結したもの
+ * 要求資源の製造ステップ一覧: 各要求資源の最速パターンのレシピを連結したもの
  */
-function getUpgradeSteps(requirements: UpgradeRequirement[]): CalculationRecipe[] {
+function getRequirementSteps(requirements: PlanRequirement[]): CalculationRecipe[] {
   return requirements.flatMap((requirement) => requirement.calculationResults?.[0].recipes ?? []);
 }
 
 /**
  * エントリの製造ステップ一覧（stepProgress と同じ順）
  * item: 選択中パターンのレシピ
- * upgrade: 各要求資源の最速パターンのレシピを連結したもの
+ * upgrade / contract: 各要求資源の最速パターンのレシピを連結したもの
  */
 export function getEntrySteps(entry: ProductionPlanEntry): CalculationRecipe[] {
   if (entry.kind === "item") {
     return entry.calculationResults[entry.selectedPatternIndex].recipes;
   }
-  return getUpgradeSteps(entry.requirements);
+  return getRequirementSteps(entry.requirements);
 }
 
 function getStepDone(entry: ProductionPlanEntry, stepIndex: number): number {
@@ -119,7 +121,7 @@ export function getCraftableRuns(recipe: CalculationRecipe, done: number, invent
  * - 親ステップの残り回数から入力の需要を積み、子ステップは「需要 − 在庫 − 既に積んだ生産」を埋めるのに必要な回数だけ実行する
  * - 在庫に中間材料があれば子ステップは不要（usefulRuns = 0）になり、その原材料も要求しない
  * - demands には要求されるものすべてを出し、materials にはこのエントリ内に作るステップがないもの（原材料）と、作っても足りないものだけを出す
- * - readyToFinish は upgrade なら要求資源がすべて在庫にあること、item なら最終レシピ（先頭ステップ）の残りをすべて今の在庫で実行できること
+ * - readyToFinish は upgrade / contract なら要求資源がすべて在庫にあること、item なら最終レシピ（先頭ステップ）の残りをすべて今の在庫で実行できること
  */
 export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): EntryAnalysis {
   const recipes = getEntrySteps(entry);
@@ -128,10 +130,10 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
   const producedItems = new Set(recipes.flatMap((recipe) => recipe.outputs.map((output) => output.item)));
 
   // 最終成果物も要求として扱う（在庫パネルに行を出し、最終ステップの実行をそこに付けるため）
-  if (entry.kind === "upgrade") {
-    for (const requirement of entry.requirements) addAmount(demand, requirement.item, requirement.amount);
-  } else {
+  if (entry.kind === "item") {
     addAmount(demand, entry.itemId, entry.amount);
+  } else {
+    for (const requirement of entry.requirements) addAmount(demand, requirement.item, requirement.amount);
   }
 
   const steps = recipes.map((recipe, index): StepStatus => {
@@ -178,7 +180,7 @@ export function analyzeEntry(entry: ProductionPlanEntry, inventory: Inventory): 
 
 function isReadyToFinish(entry: ProductionPlanEntry, inventory: Inventory, root: StepStatus | undefined): boolean {
   if (entry.completed) return false;
-  if (entry.kind === "upgrade") {
+  if (entry.kind !== "item") {
     return entry.requirements.every((requirement) => (inventory[requirement.item] ?? 0) >= requirement.amount);
   }
   return root !== undefined && root.remaining > 0 && root.craftableNow === root.remaining;
@@ -287,7 +289,7 @@ export function addUpgradeToPlan(plan: ProductionPlan, upgradeId: string, level:
   const upgradeLevel = getUpgradeLevel(upgradeId, level);
   if (!upgradeLevel) return plan;
 
-  const requirements = resolveUpgradeRequirements(upgradeLevel.requirements);
+  const requirements = resolveRequirements(upgradeLevel.requirements);
   const newEntry: ProductionPlanUpgrade = {
     kind: "upgrade",
     id: generateId(),
@@ -295,7 +297,28 @@ export function addUpgradeToPlan(plan: ProductionPlan, upgradeId: string, level:
     level,
     completed: false,
     requirements,
-    stepProgress: getUpgradeSteps(requirements).map(() => 0),
+    stepProgress: getRequirementSteps(requirements).map(() => 0),
+  };
+
+  return { ...plan, items: [...plan.items, newEntry] };
+}
+
+/**
+ * 生産計画に納品契約を追加
+ * 存在しない契約の場合は plan をそのまま返す
+ */
+export function addContractToPlan(plan: ProductionPlan, contractId: string): ProductionPlan {
+  const contract = getContract(contractId);
+  if (!contract) return plan;
+
+  const requirements = resolveRequirements([contract.requirement]);
+  const newEntry: ProductionPlanContract = {
+    kind: "contract",
+    id: generateId(),
+    contractId,
+    completed: false,
+    requirements,
+    stepProgress: getRequirementSteps(requirements).map(() => 0),
   };
 
   return { ...plan, items: [...plan.items, newEntry] };
@@ -312,7 +335,7 @@ export function removeItemFromPlan(plan: ProductionPlan, entryId: string): Produ
 
 /**
  * エントリの完了状態を切り替え
- * upgrade を完了にすると要求資源を在庫から消費し、未完了に戻すと戻す
+ * upgrade / contract を完了にすると要求資源を在庫から消費し、未完了に戻すと戻す
  */
 export function toggleItemCompletion(plan: ProductionPlan, entryId: string): ProductionPlan {
   const entry = plan.items.find((item) => item.id === entryId);
@@ -320,7 +343,7 @@ export function toggleItemCompletion(plan: ProductionPlan, entryId: string): Pro
   const completed = !entry.completed;
 
   let inventory = plan.inventory;
-  if (entry.kind === "upgrade") {
+  if (entry.kind !== "item") {
     const sign = completed ? -1 : 1;
     for (const requirement of entry.requirements) {
       inventory = adjustInventory(inventory, requirement.item, sign * requirement.amount);
@@ -369,7 +392,7 @@ export type DirectUse = {
 export type ItemRelations = {
   madeBy: StepUse[]; // このアイテムを出力するステップ
   usedIn: StepUse[]; // このアイテムを入力に使うステップ
-  usedFor: DirectUse[]; // upgrade の要求資源 / item エントリの最終成果物として直接要求するエントリ
+  usedFor: DirectUse[]; // upgrade / contract の要求資源 / item エントリの最終成果物として直接要求するエントリ
 };
 
 export type RelationKind = "material" | "product";
@@ -462,12 +485,12 @@ function buildRelations(pending: AnalyzedEntry[]): Map<string, ItemRelations> {
       for (const output of recipe.outputs) getRelations(relations, output.item).madeBy.push(use);
       for (const input of recipe.inputs) getRelations(relations, input.item).usedIn.push(use);
     });
-    if (entry.kind === "upgrade") {
+    if (entry.kind === "item") {
+      getRelations(relations, entry.itemId).usedFor.push({ entry, amount: entry.amount });
+    } else {
       for (const requirement of entry.requirements) {
         getRelations(relations, requirement.item).usedFor.push({ entry, amount: requirement.amount });
       }
-    } else {
-      getRelations(relations, entry.itemId).usedFor.push({ entry, amount: entry.amount });
     }
   }
   return relations;

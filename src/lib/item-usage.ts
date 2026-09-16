@@ -1,4 +1,5 @@
 import { getAliasItems } from "../data/aliases";
+import { contracts } from "../data/contracts";
 import { type RecipeMethod, recipes } from "../data/recipes";
 import { upgrades } from "../data/upgrades";
 
@@ -18,6 +19,14 @@ export type RecipeUsage = {
 export type UpgradeUsage = {
   upgradeId: string;
   level: number;
+  amount: number;
+};
+
+/**
+ * アイテムを納品物とする契約
+ */
+export type ContractUsage = {
+  contractId: string;
   amount: number;
 };
 
@@ -61,4 +70,13 @@ export function findUpgradesRequiringItem(itemId: string): UpgradeUsage[] {
   }
 
   return usages;
+}
+
+/**
+ * 指定アイテムを納品物とする契約を返す
+ */
+export function findContractsRequiringItem(itemId: string): ContractUsage[] {
+  return contracts
+    .filter((contract) => contract.requirement.item === itemId)
+    .map((contract) => ({ contractId: contract.id, amount: contract.requirement.amount }));
 }

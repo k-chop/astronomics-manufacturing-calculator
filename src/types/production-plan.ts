@@ -26,10 +26,10 @@ export type ProductionPlanItem = ProductionPlanEntryBase & {
 };
 
 /**
- * アップグレードの要求資源1件
+ * アップグレード / 契約の要求資源1件
  * calculationResults が null なら原材料（レシピなし）
  */
-export type UpgradeRequirement = {
+export type PlanRequirement = {
   item: string;
   amount: number;
   calculationResults: CalculationResult[] | null;
@@ -42,10 +42,19 @@ export type ProductionPlanUpgrade = ProductionPlanEntryBase & {
   kind: "upgrade";
   upgradeId: string;
   level: number;
-  requirements: UpgradeRequirement[];
+  requirements: PlanRequirement[];
 };
 
-export type ProductionPlanEntry = ProductionPlanItem | ProductionPlanUpgrade;
+/**
+ * 生産計画の1契約（駅への納品契約。要求資源は 1 件だが upgrade と同じ形で持つ）
+ */
+export type ProductionPlanContract = ProductionPlanEntryBase & {
+  kind: "contract";
+  contractId: string;
+  requirements: PlanRequirement[];
+};
+
+export type ProductionPlanEntry = ProductionPlanItem | ProductionPlanUpgrade | ProductionPlanContract;
 
 /**
  * 生産計画全体

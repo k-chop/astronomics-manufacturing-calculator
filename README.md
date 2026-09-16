@@ -15,6 +15,7 @@ This application was created with $30 worth of Anthropic credits with Claude Cod
 - Calculate manufacturing requirements for any craftable item
 - View raw material sources (asteroids) and required quantities
 - Track your production plans with a built-in checklist
+- Add freighter/shuttle upgrades and station delivery contracts to the plan (contracts are hidden by default to avoid spoilers)
 - Monitor material collection progress
 - Aggregate materials across multiple production items
 

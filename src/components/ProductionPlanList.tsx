@@ -1,9 +1,10 @@
 import { useState } from "react";
 
+import { getContract, getStationName } from "../data/contracts";
 import { getItemName, type Locale } from "../data/item-names";
-import { getUpgradeName } from "../data/upgrades";
 import { getRecipeKey } from "../lib/calculator";
 import { formatDuration, formatNumber } from "../lib/format-utils";
+import { getEntryTitle } from "../lib/plan-format";
 import { type EntryAnalysis, isMaterialsCovered, type PlanAnalysis } from "../lib/production-plan-utils";
 import { formatRecipe } from "../lib/recipe-format";
 import type { Inventory, ProductionPlan, ProductionPlanEntry } from "../types/production-plan";
@@ -30,20 +31,21 @@ function EntryTitle({
   const titleClass = `font-semibold text-xl ${entry.completed ? "line-through text-gray-500" : "text-gray-900"}`;
 
   if (entry.kind === "item") {
-    return (
-      <div className={titleClass}>
-        {formatNumber(entry.amount)} × {getItemName(entry.itemId, locale)}
-      </div>
-    );
+    return <div className={titleClass}>{getEntryTitle(entry, locale)}</div>;
   }
+
+  const station = entry.kind === "contract" ? getContract(entry.contractId)?.station : undefined;
 
   return (
     <div>
       <div className="flex items-center gap-2">
-        <span className={titleClass}>
-          {getUpgradeName(entry.upgradeId, locale)} Lv{entry.level}
-        </span>
-        <span className="text-sm font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-700">Upgrade</span>
+        <span className={titleClass}>{getEntryTitle(entry, locale)}</span>
+        {entry.kind === "upgrade" ? (
+          <span className="text-sm font-medium px-2 py-0.5 rounded bg-purple-100 text-purple-700">Upgrade</span>
+        ) : (
+          <span className="text-sm font-medium px-2 py-0.5 rounded bg-amber-100 text-amber-700">Contract</span>
+        )}
+        {station !== undefined && <span className="text-sm text-gray-500">{getStationName(station, locale)}</span>}
       </div>
       <div className="text-sm text-gray-500 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
         {entry.requirements.map((requirement) => {
@@ -178,6 +180,12 @@ function EntryDetails({ entry, analysis, onRecordStepRuns, locale }: EntryDetail
   );
 }
 
+const readyMessages: { [kind in ProductionPlanEntry["kind"]]: string } = {
+  item: "Ready! You can craft all of this right now.",
+  upgrade: "Ready! You have everything for this upgrade. Go build it!",
+  contract: "Ready! You have everything for this contract. Go deliver it!",
+};
+
 export function ProductionPlanList({
   plan,
   analysis,
@@ -204,7 +212,7 @@ export function ProductionPlanList({
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Production Plan</h2>
-        <p className="text-gray-500 text-base">No entries in the plan yet. Add items or upgrades from the list.</p>
+        <p className="text-gray-500 text-base">No entries in the plan yet. Add something from the list.</p>
       </div>
     );
   }
@@ -232,9 +240,7 @@ export function ProductionPlanList({
               {ready && (
                 <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded bg-green-600 text-white text-base font-bold">
                   <span aria-hidden="true">🚀</span>
-                  {entry.kind === "upgrade"
-                    ? "Ready! You have everything for this upgrade. Go build it!"
-                    : "Ready! You can craft all of this right now."}
+                  {readyMessages[entry.kind]}
                 </div>
               )}
               <div className="flex items-start justify-between gap-4">

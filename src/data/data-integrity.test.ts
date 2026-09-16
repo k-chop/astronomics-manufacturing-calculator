@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { aliases } from "./aliases";
+import { contracts, stationNames } from "./contracts";
 import { itemNames } from "./item-names";
 import { rawMaterials } from "./raw-materials";
 import { recipes } from "./recipes";
@@ -29,8 +30,10 @@ describe("データ整合性", () => {
     }
   });
 
-  it("エイリアス以外の原材料は産出地を持つ", () => {
-    const materials = Object.values(rawMaterials).filter((material) => !(material.id in aliases));
+  it("エイリアスと misc 以外の原材料は産出地を持つ", () => {
+    const materials = Object.values(rawMaterials).filter(
+      (material) => !(material.id in aliases) && material.category !== "misc",
+    );
     for (const material of materials) {
       expect(material.foundOn.length, `${material.id} の産出地がない`).toBeGreaterThan(0);
     }
@@ -57,6 +60,28 @@ describe("データ整合性", () => {
           ).toBe(true);
         }
       }
+    }
+  });
+
+  it("契約の納品物はすべて表示名を持ち、原材料かレシピ持ちのどちらかである", () => {
+    for (const contract of contracts) {
+      const label = `${contract.id} の納品物 ${contract.requirement.item}`;
+      expect(itemNames, `${label} の表示名がない`).toHaveProperty(contract.requirement.item);
+      expect(
+        contract.requirement.item in rawMaterials || contract.requirement.item in recipes,
+        `${label} が原材料でもレシピ持ちでもない`,
+      ).toBe(true);
+    }
+  });
+
+  it("契約の id は一意で、駅ごとに number が 1 からの連番である", () => {
+    const ids = contracts.map((contract) => contract.id);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    for (const station of Object.keys(stationNames)) {
+      const numbers = contracts.filter((contract) => contract.station === station).map((contract) => contract.number);
+      expect(numbers.length, `${station} の契約がない`).toBeGreaterThan(0);
+      expect(numbers, `${station} の契約番号が連番でない`).toEqual(numbers.map((_, index) => index + 1));
     }
   });
 
