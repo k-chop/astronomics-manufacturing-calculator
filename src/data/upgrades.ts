@@ -170,6 +170,17 @@ export const upgrades: Upgrade[] = [
         ],
         credits: 1280,
       },
+      {
+        level: 4,
+        requirements: [{ item: "aquamarine", amount: 400 }],
+        // 正確な値は未確認。ユーザの記憶と Lv3/Lv5 の中間からの推定値
+        credits: 1600,
+      },
+      {
+        level: 5,
+        requirements: [{ item: "neon-gas", amount: 200 }],
+        credits: 1950,
+      },
     ],
   },
 
