@@ -34,7 +34,7 @@ export const upgrades: Upgrade[] = [
           { item: "biomass", amount: 300 },
           { item: "carbon", amount: 500 },
         ],
-        credits: 40,
+        credits: 0,
       },
       {
         level: 2,
@@ -65,7 +65,7 @@ export const upgrades: Upgrade[] = [
           { item: "cobalt", amount: 800 },
           { item: "iron", amount: 1000 },
         ],
-        credits: 330,
+        credits: 0,
       },
       {
         level: 2,
@@ -93,7 +93,7 @@ export const upgrades: Upgrade[] = [
       {
         level: 1,
         requirements: [{ item: "rutile", amount: 500 }],
-        credits: 175,
+        credits: 0,
       },
       {
         level: 2,
@@ -124,7 +124,7 @@ export const upgrades: Upgrade[] = [
           { item: "nickel", amount: 500 },
           { item: "silica", amount: 700 },
         ],
-        credits: 135,
+        credits: 0,
       },
       {
         level: 2,
@@ -155,7 +155,7 @@ export const upgrades: Upgrade[] = [
           { item: "copper", amount: 700 },
           { item: "graphite", amount: 350 },
         ],
-        credits: 367.5,
+        credits: 0,
       },
       {
         level: 2,
@@ -182,7 +182,7 @@ export const upgrades: Upgrade[] = [
       {
         level: 1,
         requirements: [{ item: "galena", amount: 600 }],
-        credits: 210,
+        credits: 0,
       },
       {
         level: 2,
@@ -238,7 +238,7 @@ export const upgrades: Upgrade[] = [
       {
         level: 1,
         requirements: [{ item: "iron", amount: 300 }],
-        credits: 15,
+        credits: 0,
       },
       {
         level: 2,
