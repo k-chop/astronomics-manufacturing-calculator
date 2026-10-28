@@ -284,6 +284,11 @@ export const upgrades: Upgrade[] = [
         ],
         credits: 1540,
       },
+      {
+        level: 4,
+        requirements: [{ item: "calcite", amount: 1000 }],
+        credits: 1730,
+      },
     ],
   },
 ];
