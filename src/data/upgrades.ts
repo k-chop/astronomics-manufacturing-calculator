@@ -289,6 +289,11 @@ export const upgrades: Upgrade[] = [
         requirements: [{ item: "calcite", amount: 1000 }],
         credits: 1730,
       },
+      {
+        level: 5,
+        requirements: [{ item: "holo-display-screens", amount: 40 }],
+        credits: 1950,
+      },
     ],
   },
 ];
