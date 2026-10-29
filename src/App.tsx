@@ -225,7 +225,7 @@ export const App = () => {
         {/* Footer */}
         <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-500">
           <div className="space-y-1">
-            <div>Compatible with Astronomics version 0.83.1</div>
+            <div>Compatible with Astronomics version 0.84.6a (2026-10-22)</div>
             <div>
               Data sourced from{" "}
               <a
