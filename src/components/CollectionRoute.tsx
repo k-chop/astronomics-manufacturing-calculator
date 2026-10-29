@@ -1,6 +1,12 @@
 import { type ReactNode, useState } from "react";
 
-import { type AsteroidName, type Composition, getAsteroidInfo, getCompositionName } from "../data/asteroid";
+import {
+  type AsteroidName,
+  type Composition,
+  getAsteroidInfo,
+  getCompositionName,
+  getNebulaGuides,
+} from "../data/asteroid";
 import { getItemName, type Locale } from "../data/item-names";
 import type { CollectionRoute as CollectionRouteData, SiteItem } from "../lib/collection-route";
 import { formatNumber } from "../lib/format-utils";
@@ -43,14 +49,29 @@ function AnyAsteroidName({ composition, locale }: { composition: Composition; lo
 
 /**
  * 経路の 1 行（番号・場所・材料の 3 列）。親の grid に列を流し込むので li 自体は contents にする
- * number があれば停泊順を付ける
+ * number があれば停泊順を付ける。notes は場所の下に場所・材料の 2 列ぶち抜きで 1 件 1 行出す（星雲の行き方など）
  */
-function RouteLine({ number, place, children }: { number?: number; place: ReactNode; children: ReactNode }) {
+function RouteLine({
+  number,
+  place,
+  notes,
+  children,
+}: {
+  number?: number;
+  place: ReactNode;
+  notes?: string[];
+  children: ReactNode;
+}) {
   return (
     <li className="contents">
       <span className="font-mono text-right text-gray-500">{number === undefined ? "" : `${number}.`}</span>
       {place}
       <span className="flex flex-wrap gap-x-2">{children}</span>
+      {notes?.map((note) => (
+        <span key={note} className="col-start-2 col-span-2 text-sm text-gray-500">
+          {note}
+        </span>
+      ))}
     </li>
   );
 }
@@ -100,7 +121,12 @@ export function CollectionRoute({ route, locale = "en" }: CollectionRouteProps) 
             </RouteLine>
           ))}
           {nebulae.map(({ id, items }, index) => (
-            <RouteLine key={id} number={stops.length + index + 1} place={<SiteName id={id} locale={locale} />}>
+            <RouteLine
+              key={id}
+              number={stops.length + index + 1}
+              place={<SiteName id={id} locale={locale} />}
+              notes={getNebulaGuides(id, locale).map(({ depth, from }) => `${depth} (${from})`)}
+            >
               <SiteItems items={items} locale={locale} />
             </RouteLine>
           ))}

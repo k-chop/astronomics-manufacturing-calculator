@@ -1,4 +1,4 @@
-import { type AsteroidName, getAsteroidInfo } from "../data/asteroid";
+import { type AsteroidName, getAsteroidInfo, getNebulaGuides, isNebulaId } from "../data/asteroid";
 import type { Locale } from "../data/item-names";
 
 type FoundOnListProps = {
@@ -25,7 +25,18 @@ export function FoundOnList({ foundOn, locale = "en", mutedClassName = "text-gra
             </div>
           );
         } else {
-          return <div key={asteroid}>{info.name}</div>;
+          const guides = isNebulaId(asteroid) ? getNebulaGuides(asteroid, locale) : [];
+          return (
+            <div key={asteroid}>
+              <div>{info.name}</div>
+              {guides.map(({ depth, from }) => (
+                <div key={depth} className={`pl-4 ${mutedClassName}`}>
+                  <div>{depth}</div>
+                  <div>({from})</div>
+                </div>
+              ))}
+            </div>
+          );
         }
       })}
     </div>

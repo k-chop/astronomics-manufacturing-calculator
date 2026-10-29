@@ -1,3 +1,4 @@
+import { formatNumber } from "../lib/format-utils";
 import type { Locale } from "./item-names";
 
 const asteroids = {
@@ -61,6 +62,33 @@ const nebulaNames = {
   "oxygen-gas-nebula": { en: "Oxygen Gas Nebula" },
 } as const;
 
+type RegionId = keyof typeof regionNames;
+
+/**
+ * 各リージョンのステーションの depth（Mm）。depth はマップの左右の位置で、全リージョン共通の座標
+ * マップは左から右に流れ、各リージョンの左端にそのリージョンのステーションがある
+ * Medusa Minerals はゲーム内表示 998 だが 1000 に丸めている
+ */
+const stationDepths: { [region in RegionId]: number } = {
+  cubecorp: 0,
+  medusaminerals: 1000,
+  twgems: 2000,
+  blacktidal: 3700,
+  ceresvesta: 5400,
+  noblecoreag: 7600,
+};
+
+// 星雲の depth（Mm）。同じ種類の星雲が複数あれば複数入れる
+const nebulaDepths: { [id in keyof typeof nebulaNames]: number[] } = {
+  "argon-gas-nebula": [9200],
+  "chlorine-gas-nebula": [8700],
+  "helium-gas-nebula": [9600],
+  "hydrogen-gas-nebula": [4800],
+  "neon-gas-nebula": [8350],
+  "nitrogen-gas-nebula": [6900],
+  "oxygen-gas-nebula": [8000],
+};
+
 export const genericAsteroidNames = {
   // Generic types
   "carbonite-asteroids": { en: "Carbonite Asteroids" },
@@ -93,7 +121,7 @@ function isAsteroidId(location: AsteroidName): location is AsteroidId {
   return location in asteroids;
 }
 
-function isNebulaId(location: AsteroidName): location is NebulaId {
+export function isNebulaId(location: AsteroidName): location is NebulaId {
   return location in nebulaNames;
 }
 
@@ -142,4 +170,48 @@ export function getAsteroidInfo(
       name: genericAsteroidNames[asteroidId][locale],
     };
   }
+}
+
+/**
+ * depth の地点に最も近いステーション（差が同じなら先に並んでいる方）
+ */
+function nearestStation(depth: number): RegionId {
+  const regions = Object.keys(stationDepths) as RegionId[];
+  return regions.reduce((a, b) => (Math.abs(stationDepths[a] - depth) <= Math.abs(stationDepths[b] - depth) ? a : b));
+}
+
+/**
+ * 星雲 1 か所の位置: depth・最寄りステーションからの方向と距離
+ */
+export type NebulaLocation = {
+  depth: number;
+  station: RegionId;
+  direction: "left" | "right";
+  distanceMm: number;
+};
+
+export function getNebulaLocations(id: NebulaId): NebulaLocation[] {
+  return nebulaDepths[id].map((depth) => {
+    const station = nearestStation(depth);
+    const diff = depth - stationDepths[station];
+    return {
+      depth,
+      station,
+      direction: diff < 0 ? "left" : "right",
+      distanceMm: Math.abs(diff),
+    };
+  });
+}
+
+/**
+ * 星雲への行き方の案内。1 か所につき { depth: "Depth: 6,900 Mm", from: "700 Mm left of Noblecore AG Station" } の形で 1 件
+ * 1 行で出すか 2 行に分けるかは表示側で決める
+ */
+export type NebulaGuide = { depth: string; from: string };
+
+export function getNebulaGuides(id: NebulaId, locale: Locale = "en"): NebulaGuide[] {
+  return getNebulaLocations(id).map(({ depth, station, direction, distanceMm }) => ({
+    depth: `Depth: ${formatNumber(depth)} Mm`,
+    from: `${formatNumber(distanceMm)} Mm ${direction} of ${regionNames[station][locale]} Station`,
+  }));
 }

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { asteroidIds, resolveLocation } from "./asteroid";
+import {
+  asteroidIds,
+  genericAsteroidNames,
+  getNebulaGuides,
+  getNebulaLocations,
+  isNebulaId,
+  resolveLocation,
+} from "./asteroid";
 
 describe("resolveLocation", () => {
   it("個別小惑星はその 1 件になる", () => {
@@ -25,5 +32,42 @@ describe("resolveLocation", () => {
 
   it("星雲は nebula になる", () => {
     expect(resolveLocation("argon-gas-nebula")).toEqual([{ kind: "nebula", id: "argon-gas-nebula" }]);
+  });
+});
+
+describe("getNebulaLocations", () => {
+  it("右側のステーションの方が近ければ、そこから左に戻る", () => {
+    expect(getNebulaLocations("nitrogen-gas-nebula")).toEqual([
+      { depth: 6900, station: "noblecoreag", direction: "left", distanceMm: 700 },
+    ]);
+    expect(getNebulaLocations("hydrogen-gas-nebula")).toEqual([
+      { depth: 4800, station: "ceresvesta", direction: "left", distanceMm: 600 },
+    ]);
+  });
+
+  it("すべての星雲に位置がある", () => {
+    const nebulaIds = (Object.keys(genericAsteroidNames) as (keyof typeof genericAsteroidNames)[]).filter(isNebulaId);
+    expect(nebulaIds.length).toBe(7);
+    for (const id of nebulaIds) expect(getNebulaLocations(id).length, `${id} の位置がない`).toBeGreaterThan(0);
+  });
+
+  it("左側のステーションの方が近ければ、そこから右に進む", () => {
+    expect(getNebulaLocations("oxygen-gas-nebula")).toEqual([
+      { depth: 8000, station: "noblecoreag", direction: "right", distanceMm: 400 },
+    ]);
+  });
+});
+
+describe("getNebulaGuides", () => {
+  it("1,000 以上はカンマ区切りにする", () => {
+    expect(getNebulaGuides("helium-gas-nebula")).toEqual([
+      { depth: "Depth: 9,600 Mm", from: "2,000 Mm right of Noblecore AG Station" },
+    ]);
+  });
+
+  it("depth と最寄りステーションからの方向・距離を出す", () => {
+    expect(getNebulaGuides("nitrogen-gas-nebula")).toEqual([
+      { depth: "Depth: 6,900 Mm", from: "700 Mm left of Noblecore AG Station" },
+    ]);
   });
 });
